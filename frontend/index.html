@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxAgent AI — Multilingual Conversational Voice Agent Platform</title>
+<meta name="description" content="Enterprise-grade multilingual AI voice agent platform powered by RAG, Gemini LLM, and real-time speech processing.">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-mode" data-page="landing">
+
+<!-- ============================================= -->
+<!-- BACKGROUND DECORATION                          -->
+<!-- ============================================= -->
+<div class="bg-decoration" aria-hidden="true">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<!-- ============================================= -->
+<!-- NAVIGATION                                     -->
+<!-- ============================================= -->
+<header class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-icon"><i class="fa-solid fa-waveform-lines"></i></span>
+      <span class="logo-text">VoxAgent<span class="logo-accent">AI</span></span>
+    </a>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#workflow" class="nav-link">How It Works</a>
+      <a href="#architecture" class="nav-link">Architecture</a>
+      <a href="#tech-stack" class="nav-link">Tech Stack</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <a href="login.html" class="btn btn-ghost">Log In</a>
+      <a href="login.html" class="btn btn-primary">
+        Get Started <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <button class="nav-hamburger" id="navHamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================= -->
+<!-- HERO SECTION                                   -->
+<!-- ============================================= -->
+<section class="hero" id="hero">
+  <div class="hero-container">
+    <div class="hero-badge fade-in-up">
+      <span class="pulse-dot"></span>
+      Live Demo · University Capstone Project
+    </div>
+
+    <h1 class="hero-title fade-in-up" style="animation-delay:.1s">
+      The Multilingual AI Voice Agent
+      <span class="gradient-text">that actually understands context</span>
+    </h1>
+
+    <p class="hero-subtitle fade-in-up" style="animation-delay:.2s">
+      A retrieval-augmented, multilingual conversational voice platform combining real-time speech recognition,
+      vector search over your knowledge base, and Gemini-powered reasoning — wrapped in a production-grade SaaS interface.
+    </p>
+
+    <div class="hero-cta fade-in-up" style="animation-delay:.3s">
+      <a href="login.html" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-play"></i> Try Live Demo
+      </a>
+      <a href="#workflow" class="btn btn-outline btn-lg">
+        <i class="fa-solid fa-diagram-project"></i> See How It Works
+      </a>
+    </div>
+
+    <div class="hero-stats fade-in-up" style="animation-delay:.4s">
+      <div class="stat-item">
+        <span class="stat-value" data-count="12">0</span>
+        <span class="stat-label">Languages Supported</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" data-count="98">0</span><span class="stat-suffix">%</span>
+        <span class="stat-label">Intent Accuracy</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" data-count="420">0</span><span class="stat-suffix">ms</span>
+        <span class="stat-label">Avg. Response Latency</span>
+      </div>
+    </div>
+
+    <!-- Hero Visual: mock live call preview -->
+    <div class="hero-visual fade-in-up" style="animation-delay:.5s">
+      <div class="glass-panel call-preview">
+        <div class="call-preview-header">
+          <div class="call-preview-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="call-preview-title">Live Call Simulator</span>
+          <span class="call-preview-status"><span class="pulse-dot pulse-dot-sm"></span> Connected</span>
+        </div>
+        <div class="call-preview-body">
+          <div class="voice-wave" id="heroWave">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-transcript">
+            <p class="transcript-line user"><i class="fa-solid fa-user"></i> "¿Cuál es el estado de mi pedido #4521?"</p>
+            <p class="transcript-line detected"><i class="fa-solid fa-language"></i> Detected: Spanish (es-ES)</p>
+            <p class="transcript-line ai"><i class="fa-solid fa-robot"></i> "Tu pedido #4521 fue enviado ayer y llega el jueves."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- LOGO / TRUST STRIP                             -->
+<!-- ============================================= -->
+<section class="trust-strip">
+  <p class="trust-label">Built on industry-standard AI infrastructure</p>
+  <div class="trust-logos">
+    <span><i class="fa-solid fa-microchip"></i> Google Gemini</span>
+    <span><i class="fa-solid fa-cube"></i> Pinecone</span>
+    <span><i class="fa-solid fa-bolt"></i> FastAPI</span>
+    <span><i class="fa-solid fa-database"></i> SQLite</span>
+    <span><i class="fa-solid fa-microphone"></i> Web Speech API</span>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- FEATURES SECTION                               -->
+<!-- ============================================= -->
+<section class="features" id="features">
+  <div class="section-header">
+    <span class="section-tag">Features</span>
+    <h2 class="section-title">Everything a real voice AI platform needs</h2>
+    <p class="section-subtitle">Designed to mirror commercial voice-agent products, end to end.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-blue"><i class="fa-solid fa-language"></i></div>
+      <h3>Multilingual Understanding</h3>
+      <p>Automatic spoken-language detection across 12+ languages with real-time transcription via the Web Speech API.</p>
+    </div>
+
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-purple"><i class="fa-solid fa-book-open"></i></div>
+      <h3>Retrieval-Augmented Generation</h3>
+      <p>Upload PDFs, DOCX, or TXT files. Content is chunked, embedded, and stored in Pinecone for grounded, accurate answers.</p>
+    </div>
+
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-green"><i class="fa-solid fa-comments"></i></div>
+      <h3>Contextual AI Responses</h3>
+      <p>Gemini LLM combines retrieved knowledge with conversation history to generate natural, on-topic replies.</p>
+    </div>
+
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-orange"><i class="fa-solid fa-waveform"></i></div>
+      <h3>Natural Voice Synthesis</h3>
+      <p>Responses are spoken back instantly using the browser SpeechSynthesis API, matched to the detected language.</p>
+    </div>
+
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-pink"><i class="fa-solid fa-chart-line"></i></div>
+      <h3>Real-Time Analytics</h3>
+      <p>Track call volume, sentiment trends, language distribution, and latency with live Chart.js dashboards.</p>
+    </div>
+
+    <div class="feature-card glass-panel">
+      <div class="feature-icon icon-teal"><i class="fa-solid fa-shield-halved"></i></div>
+      <h3>Full Call Logging</h3>
+      <p>Every conversation is transcribed, summarized, and stored in SQLite with searchable filters and full transcripts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- WORKFLOW SECTION                               -->
+<!-- ============================================= -->
+<section class="workflow" id="workflow">
+  <div class="section-header">
+    <span class="section-tag">How It Works</span>
+    <h2 class="section-title">From spoken words to grounded answers</h2>
+    <p class="section-subtitle">The full RAG + voice pipeline, visualized.</p>
+  </div>
+
+  <div class="workflow-diagram">
+    <div class="workflow-step" style="--step-delay:0s">
+      <div class="workflow-icon"><i class="fa-solid fa-microphone"></i></div>
+      <h4>1. Capture Speech</h4>
+      <p>User speaks; browser captures audio via Web Speech API.</p>
+    </div>
+    <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+    <div class="workflow-step" style="--step-delay:.15s">
+      <div class="workflow-icon"><i class="fa-solid fa-language"></i></div>
+      <h4>2. Detect Language</h4>
+      <p>Spoken language identified and transcribed to text.</p>
+    </div>
+    <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+    <div class="workflow-step" style="--step-delay:.3s">
+      <div class="workflow-icon"><i class="fa-solid fa-vector-square"></i></div>
+      <h4>3. Embed &amp; Search</h4>
+      <p>Query embedded and matched against Pinecone vector index.</p>
+    </div>
+    <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+    <div class="workflow-step" style="--step-delay:.45s">
+      <div class="workflow-icon"><i class="fa-solid fa-brain"></i></div>
+      <h4>4. Generate Response</h4>
+      <p>Top chunks + context sent to Gemini LLM for a grounded reply.</p>
+    </div>
+    <div class="workflow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+    <div class="workflow-step" style="--step-delay:.6s">
+      <div class="workflow-icon"><i class="fa-solid fa-volume-high"></i></div>
+      <h4>5. Speak Reply</h4>
+      <p>Response synthesized to speech and played back to the user.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- ARCHITECTURE PREVIEW                           -->
+<!-- ============================================= -->
+<section class="architecture" id="architecture">
+  <div class="section-header">
+    <span class="section-tag">System Architecture</span>
+    <h2 class="section-title">Built like a real production system</h2>
+    <p class="section-subtitle">A clean separation of frontend, backend, storage, and AI layers.</p>
+  </div>
+
+  <div class="architecture-panel glass-panel">
+    <div class="arch-layer">
+      <div class="arch-node"><i class="fa-solid fa-display"></i><span>Frontend</span><small>HTML / CSS / JS</small></div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-layer">
+      <div class="arch-node"><i class="fa-solid fa-server"></i><span>FastAPI Backend</span><small>REST API Layer</small></div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-layer arch-layer-split">
+      <div class="arch-node"><i class="fa-solid fa-database"></i><span>SQLite</span><small>Call Logs &amp; Users</small></div>
+      <div class="arch-node"><i class="fa-solid fa-cube"></i><span>Pinecone</span><small>Vector Search</small></div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-layer">
+      <div class="arch-node"><i class="fa-solid fa-brain"></i><span>Gemini LLM + Embeddings</span><small>Reasoning &amp; RAG</small></div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-layer">
+      <div class="arch-node"><i class="fa-solid fa-microphone-lines"></i><span>Browser Speech API</span><small>STT &amp; TTS</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- TECH STACK SECTION                             -->
+<!-- ============================================= -->
+<section class="tech-stack" id="tech-stack">
+  <div class="section-header">
+    <span class="section-tag">Tech Stack</span>
+    <h2 class="section-title">Free and open tooling, production-grade design</h2>
+  </div>
+
+  <div class="tech-grid">
+    <div class="tech-card glass-panel"><i class="fa-brands fa-html5"></i><span>HTML5</span></div>
+    <div class="tech-card glass-panel"><i class="fa-brands fa-css3-alt"></i><span>CSS3</span></div>
+    <div class="tech-card glass-panel"><i class="fa-brands fa-js"></i><span>JavaScript ES6</span></div>
+    <div class="tech-card glass-panel"><i class="fa-solid fa-bolt"></i><span>FastAPI</span></div>
+    <div class="tech-card glass-panel"><i class="fa-solid fa-database"></i><span>SQLite</span></div>
+    <div class="tech-card glass-panel"><i class="fa-solid fa-cube"></i><span>Pinecone</span></div>
+    <div class="tech-card glass-panel"><i class="fa-solid fa-gem"></i><span>Gemini API</span></div>
+    <div class="tech-card glass-panel"><i class="fa-solid fa-chart-simple"></i><span>Chart.js</span></div>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- FINAL CTA                                       -->
+<!-- ============================================= -->
+<section class="final-cta">
+  <div class="glass-panel cta-panel">
+    <h2>Ready to see it in action?</h2>
+    <p>Launch the live call simulator and talk to the AI agent yourself — no setup required.</p>
+    <a href="login.html" class="btn btn-primary btn-lg">
+      Launch Demo <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- FOOTER                                         -->
+<!-- ============================================= -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-brand">
+      <span class="logo-icon"><i class="fa-solid fa-waveform-lines"></i></span>
+      <span class="logo-text">VoxAgent<span class="logo-accent">AI</span></span>
+      <p>A university capstone project demonstrating multilingual conversational AI architecture.</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h5>Product</h5>
+        <a href="#features">Features</a>
+        <a href="#workflow">How It Works</a>
+        <a href="#architecture">Architecture</a>
+      </div>
+      <div class="footer-col">
+        <h5>Platform</h5>
+        <a href="login.html">Log In</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="live-calls.html">Live Call Demo</a>
+      </div>
+      <div class="footer-col">
+        <h5>Project</h5>
+        <a href="404.html">Documentation</a>
+        <a href="404.html">GitHub</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 VoxAgent AI · University Major Project Prototype · Not for commercial use</p>
+  </div>
+</footer>
+
+<!-- ============================================= -->
+<!-- SCRIPTS                                        -->
+<!-- ============================================= -->
+<script src="js/utils.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile · VoxAgent AI</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-mode" data-page="profile">
+<div class="bg-decoration"><div class="bg-glow bg-glow-1"></div><div class="bg-glow bg-glow-2"></div><div class="bg-grid"></div></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-headset"></i></div>
+      <span class="logo-text">Vox<span class="logo-accent">Agent</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+      <a href="live-calls.html" class="sidebar-link"><i class="fa-solid fa-phone-volume"></i><span>Live Calls</span></a>
+      <a href="call-logs.html" class="sidebar-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span></a>
+      <a href="knowledge.html" class="sidebar-link"><i class="fa-solid fa-book"></i><span>Knowledge Base</span></a>
+      <a href="analytics.html" class="sidebar-link"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="profile.html" class="sidebar-link active"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="sidebar-status"><span class="pulse-dot"></span><span>AI Engine Online</span></div></div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+        <div><div class="topbar-title">Profile</div><div class="topbar-subtitle">Your account details</div></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-icon" id="themeToggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+        <button class="btn btn-secondary" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+      </div>
+    </header>
+
+    <div class="page-content" style="max-width:560px;">
+      <div class="glass-panel" style="padding:var(--space-5); text-align:center;">
+        <div class="avatar-fallback" id="profileAvatar" style="width:80px; height:80px; border-radius:50%; margin:0 auto var(--space-4); font-size:1.5rem;">A</div>
+        <h2 id="profileName">—</h2>
+        <p id="profileEmail" class="text-muted">—</p>
+        <p class="text-muted" id="profileRole" style="margin-top:4px;">—</p>
+      </div>
+
+      <form id="profileForm" class="glass-panel mt-4" style="padding:var(--space-5);">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" name="full_name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avatar URL</label>
+          <input type="text" class="form-input" name="avatar_url" placeholder="https://…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async function () {
+  if (!window.VoxAPI.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+  const { toast, capitalize } = window.VoxUtils;
+  const form = document.getElementById('profileForm');
+
+  async function loadProfile() {
+    const user = await window.VoxAPI.getProfile();
+    document.getElementById('profileName').textContent = user.full_name || 'Unnamed User';
+    document.getElementById('profileEmail').textContent = user.email;
+    document.getElementById('profileRole').textContent = capitalize(user.role);
+    document.getElementById('profileAvatar').textContent = (user.full_name || user.email)[0].toUpperCase();
+    form.elements['full_name'].value = user.full_name || '';
+    form.elements['avatar_url'].value = user.avatar_url || '';
+  }
+
+  try { await loadProfile(); } catch (err) { toast(err.message, 'error'); }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await window.VoxAPI.updateProfile({
+        full_name: form.elements['full_name'].value,
+        avatar_url: form.elements['avatar_url'].value,
+      });
+      toast('Profile updated', 'success');
+      loadProfile();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => window.VoxAPI.logout());
+})();
+</script>
+</body>
+</html>

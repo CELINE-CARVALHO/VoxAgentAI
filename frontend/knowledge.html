@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Base · VoxAgent AI</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-mode" data-page="knowledge">
+<div class="bg-decoration"><div class="bg-glow bg-glow-1"></div><div class="bg-glow bg-glow-2"></div><div class="bg-grid"></div></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-headset"></i></div>
+      <span class="logo-text">Vox<span class="logo-accent">Agent</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+      <a href="live-calls.html" class="sidebar-link"><i class="fa-solid fa-phone-volume"></i><span>Live Calls</span></a>
+      <a href="call-logs.html" class="sidebar-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span></a>
+      <a href="knowledge.html" class="sidebar-link active"><i class="fa-solid fa-book"></i><span>Knowledge Base</span></a>
+      <a href="analytics.html" class="sidebar-link"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="profile.html" class="sidebar-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="sidebar-status"><span class="pulse-dot"></span><span>AI Engine Online</span></div></div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+        <div><div class="topbar-title">Knowledge Base</div><div class="topbar-subtitle">Documents your AI agent uses to answer questions</div></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-icon" id="themeToggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+        <div class="topbar-avatar"><div class="avatar-fallback">A</div></div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="dropzone glass-panel" id="dropzone" style="border:2px dashed var(--border-glass); padding:var(--space-6); text-align:center; cursor:pointer;">
+        <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.docx,.txt,.md,.csv">
+        <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem; color:var(--accent-primary);"></i>
+        <p style="margin-top:var(--space-3); color:var(--text-primary); font-weight:600;">Drop files here or click to upload</p>
+        <p class="text-muted">PDF, DOCX, TXT, MD, CSV — up to 20MB each</p>
+      </div>
+
+      <div class="filter-bar glass-panel" style="display:flex; gap:var(--space-3); padding:var(--space-4); flex-wrap:wrap;">
+        <input type="text" class="form-input" id="kbSearchInput" placeholder="Search documents…" style="max-width:280px;">
+        <select class="form-select" id="kbStatusFilter" style="max-width:160px;">
+          <option value="">All Statuses</option>
+          <option value="ready">Ready</option>
+          <option value="processing">Processing</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+
+      <div class="table-card glass-panel">
+        <div class="data-table">
+          <div class="table-row table-head">
+            <div class="table-cell">Document</div>
+            <div class="table-cell">Type</div>
+            <div class="table-cell">Size</div>
+            <div class="table-cell">Status</div>
+            <div class="table-cell">Uploaded</div>
+            <div class="table-cell"></div>
+          </div>
+          <div id="documentList"></div>
+        </div>
+        <div class="empty-state hidden" id="kbEmptyState" style="text-align:center; padding:var(--space-6);">
+          <i class="fa-solid fa-book" style="font-size:2rem; opacity:0.4;"></i>
+          <p class="mt-4">No documents yet. Upload your first knowledge base file above.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/knowledge.js"></script>
+</body>
+</html>

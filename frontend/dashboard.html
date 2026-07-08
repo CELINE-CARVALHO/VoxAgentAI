@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · VoxAgent AI</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-mode" data-page="dashboard">
+<div class="bg-decoration"><div class="bg-glow bg-glow-1"></div><div class="bg-glow bg-glow-2"></div><div class="bg-grid"></div></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-headset"></i></div>
+      <span class="logo-text">Vox<span class="logo-accent">Agent</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+      <a href="live-calls.html" class="sidebar-link"><i class="fa-solid fa-phone-volume"></i><span>Live Calls</span></a>
+      <a href="call-logs.html" class="sidebar-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span></a>
+      <a href="knowledge.html" class="sidebar-link"><i class="fa-solid fa-book"></i><span>Knowledge Base</span></a>
+      <a href="analytics.html" class="sidebar-link"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="profile.html" class="sidebar-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-status"><span class="pulse-dot"></span><span>AI Engine Online</span></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="topbar-title">Dashboard</div>
+          <div class="topbar-subtitle">Overview of your AI voice agent</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-icon" id="themeToggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+        <div class="topbar-avatar" id="topbarAvatar"><div class="avatar-fallback">A</div></div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div><h1>Welcome back</h1><p>Here's what's happening with your calls today.</p></div>
+        <a href="live-calls.html" class="btn btn-primary"><i class="fa-solid fa-phone"></i><span class="btn-label-full">Start a Live Call</span></a>
+      </div>
+
+      <div class="stats-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-4);">
+        <div class="stat-card glass-panel">
+          <div class="stat-icon"><i class="fa-solid fa-phone"></i></div>
+          <div class="stat-value" id="statCallsToday">—</div>
+          <div class="stat-label">Calls Today</div>
+          <div class="stat-delta" id="statCallsDelta"></div>
+        </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-icon"><i class="fa-solid fa-phone-volume"></i></div>
+          <div class="stat-value" id="statActiveCalls">—</div>
+          <div class="stat-label">Active Calls</div>
+        </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+          <div class="stat-value" id="statAvgLatency">—</div>
+          <div class="stat-label">Avg Response Time</div>
+        </div>
+        <div class="stat-card glass-panel">
+          <div class="stat-icon"><i class="fa-solid fa-book"></i></div>
+          <div class="stat-value" id="statKbDocs">—</div>
+          <div class="stat-label">Knowledge Docs</div>
+        </div>
+      </div>
+
+      <div class="status-row" style="display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-4);">
+        <div class="status-card glass-panel">
+          <div class="status-card-header"><i class="fa-solid fa-database"></i><span>Database</span></div>
+          <div class="status-badge" id="dbStatusBadge"><span class="pulse-dot"></span>Checking…</div>
+        </div>
+        <div class="status-card glass-panel">
+          <div class="status-card-header"><i class="fa-solid fa-brain"></i><span>LLM Engine</span></div>
+          <div class="status-badge" id="llmStatusBadge"><span class="pulse-dot"></span>Checking…</div>
+        </div>
+      </div>
+
+      <div class="chart-card glass-panel">
+        <div class="chart-card-header"><h3>Call Volume — Last 7 Days</h3></div>
+        <div class="chart-canvas-wrap" style="height:280px;"><canvas id="dashboardCallVolumeChart"></canvas></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+<script>
+(async function () {
+  if (!window.VoxAPI.isAuthenticated()) { window.location.href = 'login.html'; return; }
+
+  try {
+    const stats = await window.VoxAPI.dashboardStats();
+    document.getElementById('statCallsToday').textContent = stats.calls_today;
+    document.getElementById('statActiveCalls').textContent = stats.active_calls;
+    document.getElementById('statAvgLatency').textContent = `${Math.round(stats.avg_latency_ms)}ms`;
+    document.getElementById('statKbDocs').textContent = stats.knowledge_documents;
+
+    const deltaEl = document.getElementById('statCallsDelta');
+    if (stats.calls_today_delta_pct !== null && deltaEl) {
+      const up = stats.calls_today_delta_pct >= 0;
+      deltaEl.innerHTML = `<i class="fa-solid fa-arrow-${up ? 'up' : 'down'}"></i> ${Math.abs(stats.calls_today_delta_pct)}% vs yesterday`;
+      deltaEl.classList.add(up ? 'delta-up' : 'delta-down');
+    }
+
+    const status = await window.VoxAPI.dashboardStatus();
+    const dbBadge = document.getElementById('dbStatusBadge');
+    const llmBadge = document.getElementById('llmStatusBadge');
+    dbBadge.innerHTML = `<span class="pulse-dot"></span>${status.database === 'online' ? 'Online' : 'Offline'}`;
+    llmBadge.innerHTML = `<span class="pulse-dot ${status.llm_engine !== 'online' ? 'offline' : ''}"></span>${status.llm_engine === 'online' ? 'Online' : 'Not Configured'}`;
+
+    const volume = await window.VoxAPI.analyticsCalls('daily');
+    window.VoxCharts.lineChart('dashboardCallVolumeChart', {
+      labels: volume.points.map((p) => p.label),
+      datasets: [{ label: 'Calls', data: volume.points.map((p) => p.value) }],
+    });
+  } catch (err) {
+    window.VoxUtils.toast(err.message, 'error');
+  }
+})();
+</script>
+</body>
+</html>

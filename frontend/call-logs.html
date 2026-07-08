@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Call Logs — VoxAgent AI</title>
+<meta name="description" content="Search, filter, and review the full transcript history of every AI voice agent call.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-mode" data-page="call-logs">
+
+<div class="bg-decoration" aria-hidden="true">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><i class="fa-solid fa-waveform-lines"></i></span>
+      <span class="logo-text">VoxAgent<span class="logo-accent">AI</span></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link">
+        <i class="fa-solid fa-grid-2"></i><span>Dashboard</span>
+      </a>
+      <a href="live-calls.html" class="sidebar-link">
+        <i class="fa-solid fa-phone-volume"></i><span>Live Call</span>
+      </a>
+      <a href="call-logs.html" class="sidebar-link active">
+        <i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span>
+      </a>
+      <a href="conversation.html" class="sidebar-link">
+        <i class="fa-solid fa-comments"></i><span>Conversations</span>
+      </a>
+      <a href="knowledge.html" class="sidebar-link">
+        <i class="fa-solid fa-book-open"></i><span>Knowledge Base</span>
+      </a>
+      <a href="analytics.html" class="sidebar-link">
+        <i class="fa-solid fa-chart-line"></i><span>Analytics</span>
+      </a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link">
+        <i class="fa-solid fa-gear"></i><span>Settings</span>
+      </a>
+      <a href="profile.html" class="sidebar-link">
+        <i class="fa-solid fa-user"></i><span>Profile</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-status">
+        <span class="pulse-dot pulse-dot-sm"></span> AI Engine Online
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <header class="topbar">
+      <button class="sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="topbar-title">
+        <h1>Call Logs</h1>
+        <p>Search and review every conversation the AI agent has handled.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <div class="topbar-avatar">
+          <img src="assets/images/avatar-placeholder.png" alt="User avatar" onerror="this.style.display='none'">
+          <span class="avatar-fallback"><i class="fa-solid fa-user"></i></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ============================================= -->
+      <!-- FILTER BAR                                      -->
+      <!-- ============================================= -->
+      <div class="filter-bar glass-panel">
+        <div class="filter-search-wrap">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="callSearchInput" class="form-input filter-search-input" placeholder="Search by call ID, keyword, or phrase...">
+        </div>
+
+        <div class="filter-select-group">
+          <select class="form-select filter-select" id="filterLanguage">
+            <option value="">All Languages</option>
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+          </select>
+
+          <select class="form-select filter-select" id="filterSentiment">
+            <option value="">All Sentiment</option>
+            <option value="positive">Positive</option>
+            <option value="neutral">Neutral</option>
+            <option value="negative">Negative</option>
+          </select>
+
+          <select class="form-select filter-select" id="filterStatus">
+            <option value="">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="flagged">Flagged</option>
+            <option value="failed">Failed</option>
+          </select>
+
+          <button class="btn btn-outline" id="filterResetBtn">
+            <i class="fa-solid fa-rotate-left"></i> Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- CALL LOGS TABLE                                 -->
+      <!-- ============================================= -->
+      <div class="table-card glass-panel">
+        <div class="table-card-header">
+          <h3><i class="fa-solid fa-list"></i> All Calls</h3>
+          <span class="chart-badge" id="callCountBadge">128 calls found</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table" id="callLogsTable">
+            <thead>
+              <tr>
+                <th>Call ID</th>
+                <th>Language</th>
+                <th>Duration</th>
+                <th>Sentiment</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="callLogsBody">
+              <tr data-call-id="C-10234">
+                <td class="cell-mono">#C-10234</td>
+                <td><span class="lang-pill">🇪🇸 Spanish</span></td>
+                <td>02:14</td>
+                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
+                <td><span class="status-tag status-completed">Completed</span></td>
+                <td>Jul 08, 2026 · 09:41 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10234" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-call-id="C-10233">
+                <td class="cell-mono">#C-10233</td>
+                <td><span class="lang-pill">🇫🇷 French</span></td>
+                <td>01:47</td>
+                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
+                <td><span class="status-tag status-completed">Completed</span></td>
+                <td>Jul 08, 2026 · 09:32 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10233" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-call-id="C-10232">
+                <td class="cell-mono">#C-10232</td>
+                <td><span class="lang-pill">🇮🇳 Hindi</span></td>
+                <td>03:02</td>
+                <td><span class="sentiment-tag sentiment-negative-tag">Negative</span></td>
+                <td><span class="status-tag status-flagged">Flagged</span></td>
+                <td>Jul 08, 2026 · 09:25 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10232" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-call-id="C-10231">
+                <td class="cell-mono">#C-10231</td>
+                <td><span class="lang-pill">🇬🇧 English</span></td>
+                <td>01:05</td>
+                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
+                <td><span class="status-tag status-completed">Completed</span></td>
+                <td>Jul 08, 2026 · 09:17 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10231" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-call-id="C-10230">
+                <td class="cell-mono">#C-10230</td>
+                <td><span class="lang-pill">🇩🇪 German</span></td>
+                <td>02:38</td>
+                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
+                <td><span class="status-tag status-completed">Completed</span></td>
+                <td>Jul 08, 2026 · 09:10 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10230" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-call-id="C-10229">
+                <td class="cell-mono">#C-10229</td>
+                <td><span class="lang-pill">🇮🇹 Italian</span></td>
+                <td>00:52</td>
+                <td><span class="sentiment-tag sentiment-negative-tag">Negative</span></td>
+                <td><span class="status-tag status-failed">Failed</span></td>
+                <td>Jul 08, 2026 · 08:58 AM</td>
+                <td>
+                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10229" title="View transcript">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state (hidden by default, shown by JS when no results) -->
+        <div class="empty-state" id="callLogsEmpty" hidden>
+          <i class="fa-solid fa-inbox"></i>
+          <p>No calls match your current filters. Try adjusting your search or filters.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="callLogsPagination">
+          <button class="pagination-btn" id="paginationPrev" disabled>
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <div class="pagination-pages" id="paginationPages">
+            <button class="pagination-page active">1</button>
+            <button class="pagination-page">2</button>
+            <button class="pagination-page">3</button>
+            <span class="pagination-ellipsis">…</span>
+            <button class="pagination-page">13</button>
+          </div>
+          <button class="pagination-btn" id="paginationNext">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================= -->
+<!-- TRANSCRIPT VIEWER MODAL                         -->
+<!-- ============================================= -->
+<div class="modal-overlay" id="transcriptModal">
+  <div class="modal-box glass-panel transcript-modal-box">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-file-lines"></i> Transcript — <span id="transcriptModalCallId">#C-10234</span></h3>
+      <button class="modal-close" id="transcriptModalClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="transcript-modal-meta">
+      <span><i class="fa-solid fa-language"></i> Spanish (es-ES)</span>
+      <span><i class="fa-solid fa-clock"></i> 02:14</span>
+      <span><i class="fa-solid fa-face-smile"></i> Positive sentiment</span>
+    </div>
+
+    <div class="modal-body transcript-modal-scroll" id="transcriptModalBody">
+      <div class="turn turn-user">
+        <div class="turn-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="turn-bubble">
+          <p class="turn-text">¿Cuál es el estado de mi pedido #4521?</p>
+          <span class="turn-meta">09:41:02 AM</span>
+        </div>
+      </div>
+      <div class="turn turn-ai">
+        <div class="turn-avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="turn-bubble">
+          <p class="turn-text">Tu pedido #4521 fue enviado ayer y llega el jueves.</p>
+          <span class="turn-meta">Gemini · 310ms</span>
+        </div>
+      </div>
+      <div class="turn turn-user">
+        <div class="turn-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="turn-bubble">
+          <p class="turn-text">Perfecto, muchas gracias por la ayuda.</p>
+          <span class="turn-meta">09:41:38 AM</span>
+        </div>
+      </div>
+      <div class="turn turn-ai">
+        <div class="turn-avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="turn-bubble">
+          <p class="turn-text">De nada. ¿Hay algo más en lo que pueda ayudarte?</p>
+          <span class="turn-meta">Gemini · 280ms</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="transcriptModalCancel">Close</button>
+      <a href="conversation.html" class="btn btn-primary" id="transcriptModalFullView">
+        <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Open Full View
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/calls.js"></script>
+</body>
+</html>

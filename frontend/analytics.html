@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — VoxAgent AI</title>
+<meta name="description" content="In-depth analytics on call volume, language distribution, sentiment trends, and system performance.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+</head>
+<body class="dark-mode" data-page="analytics">
+
+<div class="bg-decoration" aria-hidden="true">
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><i class="fa-solid fa-waveform-lines"></i></span>
+      <span class="logo-text">VoxAgent<span class="logo-accent">AI</span></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link">
+        <i class="fa-solid fa-grid-2"></i><span>Dashboard</span>
+      </a>
+      <a href="live-calls.html" class="sidebar-link">
+        <i class="fa-solid fa-phone-volume"></i><span>Live Call</span>
+      </a>
+      <a href="call-logs.html" class="sidebar-link">
+        <i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span>
+      </a>
+      <a href="conversation.html" class="sidebar-link">
+        <i class="fa-solid fa-comments"></i><span>Conversations</span>
+      </a>
+      <a href="knowledge.html" class="sidebar-link">
+        <i class="fa-solid fa-book-open"></i><span>Knowledge Base</span>
+      </a>
+      <a href="analytics.html" class="sidebar-link active">
+        <i class="fa-solid fa-chart-line"></i><span>Analytics</span>
+      </a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link">
+        <i class="fa-solid fa-gear"></i><span>Settings</span>
+      </a>
+      <a href="profile.html" class="sidebar-link">
+        <i class="fa-solid fa-user"></i><span>Profile</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-status">
+        <span class="pulse-dot pulse-dot-sm"></span> AI Engine Online
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <header class="topbar">
+      <button class="sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="topbar-title">
+        <h1>Analytics</h1>
+        <p>Deep-dive into call performance, language trends, and sentiment over time.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <div class="topbar-avatar">
+          <img src="assets/images/avatar-placeholder.png" alt="User avatar" onerror="this.style.display='none'">
+          <span class="avatar-fallback"><i class="fa-solid fa-user"></i></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ============================================= -->
+      <!-- RANGE SELECTOR                                  -->
+      <!-- ============================================= -->
+      <div class="range-selector-bar glass-panel">
+        <div class="range-tabs" id="rangeTabs">
+          <button class="range-tab active" data-range="daily">Daily</button>
+          <button class="range-tab" data-range="weekly">Weekly</button>
+          <button class="range-tab" data-range="monthly">Monthly</button>
+        </div>
+        <span class="chart-badge" id="rangeUpdatedBadge">
+          <i class="fa-solid fa-rotate"></i> Updated just now
+        </span>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- SUMMARY STAT ROW                                -->
+      <!-- ============================================= -->
+      <div class="stats-grid kb-stats-grid" id="analyticsStatsGrid">
+        <div class="stat-card glass-panel">
+          <div class="stat-card-icon icon-blue"><i class="fa-solid fa-phone"></i></div>
+          <div class="stat-card-body">
+            <span class="stat-card-label">Total Calls</span>
+            <span class="stat-card-value" id="statTotalCalls">1,842</span>
+            <span class="stat-card-delta positive"><i class="fa-solid fa-arrow-up"></i> 14% vs last period</span>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-card-icon icon-teal"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div class="stat-card-body">
+            <span class="stat-card-label">Avg. Duration</span>
+            <span class="stat-card-value" id="statAvgDurationAnalytics">02:08</span>
+            <span class="stat-card-delta positive"><i class="fa-solid fa-arrow-down"></i> 6s faster</span>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-card-icon icon-orange"><i class="fa-solid fa-bolt"></i></div>
+          <div class="stat-card-body">
+            <span class="stat-card-label">Avg. Latency</span>
+            <span class="stat-card-value" id="statAvgLatency">340ms</span>
+            <span class="stat-card-delta positive"><i class="fa-solid fa-arrow-down"></i> 28ms faster</span>
+          </div>
+        </div>
+
+        <div class="stat-card glass-panel">
+          <div class="stat-card-icon icon-green"><i class="fa-solid fa-face-smile"></i></div>
+          <div class="stat-card-body">
+            <span class="stat-card-label">Positive Sentiment</span>
+            <span class="stat-card-value" id="statPositiveSentiment">78%</span>
+            <span class="stat-card-delta positive"><i class="fa-solid fa-arrow-up"></i> 5% vs last period</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- CALL VOLUME TREND (full width line chart)       -->
+      <!-- ============================================= -->
+      <div class="chart-card glass-panel chart-card-wide">
+        <div class="chart-card-header">
+          <h3><i class="fa-solid fa-chart-line"></i> Call Volume Trend</h3>
+          <span class="chart-badge" id="volumeChartRangeBadge">Daily</span>
+        </div>
+        <div class="chart-canvas-wrap chart-canvas-wrap-tall">
+          <canvas id="callVolumeChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- LANGUAGE + SENTIMENT ROW                        -->
+      <!-- ============================================= -->
+      <div class="charts-row">
+        <div class="chart-card glass-panel">
+          <div class="chart-card-header">
+            <h3><i class="fa-solid fa-earth-americas"></i> Language Distribution</h3>
+            <span class="chart-badge">All time</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="languageBarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass-panel">
+          <div class="chart-card-header">
+            <h3><i class="fa-solid fa-face-smile"></i> Sentiment Breakdown</h3>
+            <span class="chart-badge" id="sentimentRangeBadge">Daily</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="sentimentDonutChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- PERFORMANCE ROW (latency + duration)            -->
+      <!-- ============================================= -->
+      <div class="charts-row">
+        <div class="chart-card glass-panel">
+          <div class="chart-card-header">
+            <h3><i class="fa-solid fa-bolt"></i> Average Response Latency</h3>
+            <span class="chart-badge" id="latencyRangeBadge">Daily</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="latencyLineChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card glass-panel">
+          <div class="chart-card-header">
+            <h3><i class="fa-solid fa-hourglass-half"></i> Average Call Duration</h3>
+            <span class="chart-badge" id="durationRangeBadge">Daily</span>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="durationLineChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================= -->
+      <!-- TOP INTENTS TABLE                               -->
+      <!-- ============================================= -->
+      <div class="table-card glass-panel">
+        <div class="table-card-header">
+          <h3><i class="fa-solid fa-bullseye"></i> Top Detected Intents</h3>
+          <span class="chart-badge">This period</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table" id="topIntentsTable">
+            <thead>
+              <tr>
+                <th>Intent</th>
+                <th>Occurrences</th>
+                <th>Avg. Sentiment</th>
+                <th>Avg. Resolution Time</th>
+              </tr>
+            </thead>
+            <tbody id="topIntentsBody">
+              <tr>
+                <td>Order Status Inquiry</td>
+                <td>412</td>
+                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
+                <td>01:42</td>
+              </tr>
+              <tr>
+                <td>Refund Request</td>
+                <td>298</td>
+                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
+                <td>02:15</td>
+              </tr>
+              <tr>
+                <td>Technical Support</td>
+                <td>231</td>
+                <td><span class="sentiment-tag sentiment-negative-tag">Negative</span></td>
+                <td>03:08</td>
+              </tr>
+              <tr>
+                <td>Account Access Issue</td>
+                <td>187</td>
+                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
+                <td>02:31</td>
+              </tr>
+              <tr>
+                <td>Product Information</td>
+                <td>164</td>
+                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
+                <td>01:12</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+/* ==========================================================================
+   VoxAgent AI — App Shell Layout
+   Sidebar, topbar, main content area, background decoration, collapse/mobile
+   states. Depends on variables from style.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. BACKGROUND DECORATION
+   -------------------------------------------------------------------------- */
+.bg-decoration {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bg-glow {
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.7;
+}
+.bg-glow-1 { top: -200px; left: -150px; background: var(--glow-1); }
+.bg-glow-2 { bottom: -250px; right: -150px; background: var(--glow-2); }
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-glass) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.4;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+}
+
+/* --------------------------------------------------------------------------
+   2. APP SHELL
+   -------------------------------------------------------------------------- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   3. SIDEBAR
+   -------------------------------------------------------------------------- */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg-solid);
+  border-right: 1px solid var(--border-glass);
+  padding: var(--space-5) var(--space-4);
+  transition: width var(--transition-base);
+  position: relative;
+  z-index: 50;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-2) var(--space-5);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-glass);
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: var(--fs-lg); flex-shrink: 0;
+}
+.logo-text { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg); white-space: nowrap; }
+.logo-accent { color: var(--accent-primary); }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
+.sidebar-link {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-link i { width: 20px; text-align: center; font-size: var(--fs-md); flex-shrink: 0; }
+.sidebar-link:hover { background: var(--input-bg); color: var(--text-primary); }
+.sidebar-link.active {
+  background: rgba(124, 92, 255, 0.12);
+  color: var(--accent-primary);
+}
+.sidebar-link .badge-count {
+  margin-left: auto;
+  background: var(--accent-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.sidebar-divider { height: 1px; background: var(--border-glass); margin: var(--space-4) 0; }
+
+.sidebar-footer { display: flex; flex-direction: column; gap: var(--space-3); }
+.sidebar-status {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   4. SIDEBAR — COLLAPSED (desktop)
+   -------------------------------------------------------------------------- */
+.app-shell.sidebar-collapsed .sidebar { width: var(--sidebar-collapsed-width); }
+.app-shell.sidebar-collapsed .sidebar .logo-text,
+.app-shell.sidebar-collapsed .sidebar-link span,
+.app-shell.sidebar-collapsed .sidebar-status span,
+.app-shell.sidebar-collapsed .sidebar-link .badge-count { display: none; }
+.app-shell.sidebar-collapsed .sidebar-link { justify-content: center; }
+.app-shell.sidebar-collapsed .sidebar-status { justify-content: center; }
+
+/* --------------------------------------------------------------------------
+   5. MOBILE SIDEBAR + BACKDROP (base rules; breakpoint lives in responsive.css)
+   -------------------------------------------------------------------------- */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+.sidebar-backdrop.active { display: block; }
+
+/* --------------------------------------------------------------------------
+   6. MAIN CONTENT
+   -------------------------------------------------------------------------- */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   7. TOPBAR
+   -------------------------------------------------------------------------- */
+.topbar {
+  height: var(--topbar-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--border-glass);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.topbar-left { display: flex; align-items: center; gap: var(--space-4); }
+.topbar-title { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; }
+.topbar-subtitle { font-size: var(--fs-xs); color: var(--text-muted); }
+.topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
+
+.sidebar-hamburger { display: none; }
+
+.topbar-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+  cursor: pointer;
+}
+.avatar-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
+  color: #fff; font-weight: 700; font-size: var(--fs-sm);
+}
+
+/* --------------------------------------------------------------------------
+   8. PAGE CONTENT
+   -------------------------------------------------------------------------- */
+.page-content {
+  flex: 1;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); }
+.page-header h1 { margin-bottom: 2px; }

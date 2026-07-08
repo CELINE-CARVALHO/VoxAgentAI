@@ -1,0 +1,66 @@
+/* ==========================================================================
+   VoxAgent AI — Animations
+   ========================================================================== */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp var(--transition-slow) ease both; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin { animation: spin 0.8s linear infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-green);
+  animation: pulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.pulse-dot-sm { width: 6px; height: 6px; }
+.pulse-dot.offline { background: var(--accent-red); animation: none; }
+
+@keyframes waveBar {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+.wave-bars { display: flex; align-items: center; gap: 3px; height: 24px; }
+.wave-bars span {
+  width: 3px;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  animation: waveBar 0.9s ease-in-out infinite;
+}
+.wave-bars span:nth-child(2) { animation-delay: 0.1s; }
+.wave-bars span:nth-child(3) { animation-delay: 0.2s; }
+.wave-bars span:nth-child(4) { animation-delay: 0.3s; }
+.wave-bars span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--input-bg) 25%, var(--border-glass) 50%, var(--input-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast { animation: toastIn var(--transition-base) ease both; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.dropdown-menu.open { animation: slideDown var(--transition-fast) ease both; }
