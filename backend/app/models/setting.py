@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+
 
 from app.database import Base
 
@@ -11,8 +11,17 @@ from app.database import Base
 class Setting(Base):
     __tablename__ = "settings"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    id = Column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
+    user_id = Column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True
+    )
 
     # Free-form JSON blob: voice, default_language, notification prefs,
     # business hours, escalation email, etc. Kept flexible so the frontend

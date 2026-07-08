@@ -1,200 +1,118 @@
 /* ==========================================================================
-   VoxAgent AI — App Shell Script
-   Sidebar collapse/expand, mobile slide-in nav, theme toggle, active-link
-   highlighting. Loaded on every page — must run before page-specific JS.
+   VoxAgent AI — app.js
+   Cross-page shell behavior: sidebar collapse (desktop) / mobile slide-in,
+   theme toggle (dark/light, persisted), and active nav link highlighting.
+   Loaded on every page, after utils.js and api.js, before page-specific
+   scripts (e.g. calls.js, knowledge.js, analytics.js).
    ========================================================================== */
 (function () {
   'use strict';
 
-  const STORAGE_KEYS = {
-    theme: 'voxagent-theme',
-    collapsed: 'voxagent-sidebar-collapsed'
-  };
+  const THEME_KEY = 'voxagent-theme';
+  const SIDEBAR_KEY = 'voxagent-sidebar-collapsed';
 
-  const MOBILE_BREAKPOINT = 900; // px — matches responsive.css breakpoint
+  const body = document.body;
+  const appShell = document.querySelector('.app-shell');
+  const sidebar = document.getElementById('sidebar');
+  const hamburgerBtn = document.getElementById('sidebarHamburger');
+  const themeBtn = document.getElementById('themeToggle');
 
-  /* ------------------------------------------------------------------------
-     1. ELEMENT CACHE
-     ------------------------------------------------------------------------ */
-  const el = {
-    body: document.body,
-    appShell: document.querySelector('.app-shell'),
-    sidebar: document.getElementById('sidebar'),
-    hamburger: document.getElementById('sidebarHamburger'),
-    themeToggle: document.getElementById('themeToggle'),
-    sidebarLinks: document.querySelectorAll('.sidebar-link')
-  };
+  const MOBILE_BREAKPOINT = 900; // matches the CSS breakpoint that shows .sidebar-hamburger
 
-  // Guard: if this page doesn't have the app shell (unlikely), bail quietly.
-  if (!el.sidebar || !el.appShell) return;
-
-  let backdrop = document.getElementById('sidebarBackdrop');
-  if (!backdrop) {
-    backdrop = document.createElement('div');
-    backdrop.id = 'sidebarBackdrop';
-    backdrop.className = 'sidebar-backdrop';
-    document.body.appendChild(backdrop);
-  }
-
-  const state = {
-    collapsed: false,
-    mobileOpen: false
-  };
-
-  /* ------------------------------------------------------------------------
-     2. THEME (dark/light)
-     ------------------------------------------------------------------------ */
-  function applyTheme(theme) {
-    const isDark = theme === 'dark';
-    el.body.classList.toggle('dark-mode', isDark);
-    el.body.classList.toggle('light-mode', !isDark);
-
-    if (el.themeToggle) {
-      const icon = el.themeToggle.querySelector('i');
-      if (icon) {
-        icon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-      }
-      el.themeToggle.setAttribute(
-        'aria-label',
-        isDark ? 'Switch to light mode' : 'Switch to dark mode'
-      );
-    }
-  }
-
-  function getStoredTheme() {
-    const stored = localStorage.getItem(STORAGE_KEYS.theme);
-    if (stored === 'dark' || stored === 'light') return stored;
-
-    // Fall back to the class already present on <body> (server-rendered default),
-    // then to the OS preference, then default to dark (VoxAgent AI's brand default).
-    if (el.body.classList.contains('light-mode')) return 'light';
-    if (el.body.classList.contains('dark-mode')) return 'dark';
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
-    }
-    return 'dark';
-  }
-
-  function toggleTheme() {
-    const current = el.body.classList.contains('dark-mode') ? 'dark' : 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    localStorage.setItem(STORAGE_KEYS.theme, next);
-  }
-
-  /* ------------------------------------------------------------------------
-     3. SIDEBAR — DESKTOP COLLAPSE
-     ------------------------------------------------------------------------ */
-  function applyCollapsed(collapsed) {
-    state.collapsed = collapsed;
-    el.appShell.classList.toggle('sidebar-collapsed', collapsed);
-    if (el.hamburger) {
-      el.hamburger.setAttribute('aria-expanded', String(!collapsed));
-    }
-  }
-
-  function toggleCollapsed() {
-    const next = !state.collapsed;
-    applyCollapsed(next);
-    localStorage.setItem(STORAGE_KEYS.collapsed, String(next));
-  }
-
-  /* ------------------------------------------------------------------------
-     4. SIDEBAR — MOBILE SLIDE-IN
-     ------------------------------------------------------------------------ */
-  function isMobileViewport() {
+  function isMobile() {
     return window.innerWidth <= MOBILE_BREAKPOINT;
   }
 
-  function openMobileSidebar() {
-    state.mobileOpen = true;
-    el.sidebar.classList.add('sidebar-mobile-open');
-    backdrop.classList.add('active');
-    el.body.classList.add('sidebar-mobile-locked'); // optional scroll-lock hook
-    if (el.hamburger) el.hamburger.setAttribute('aria-expanded', 'true');
+  /* ------------------------------------------------------------------------
+     1. SIDEBAR — collapse (desktop) or slide-in overlay (mobile)
+     ------------------------------------------------------------------------ */
+  function applyStoredSidebarState() {
+    if (!appShell || isMobile()) return;
+    const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
+    appShell.classList.toggle('sidebar-collapsed', collapsed);
   }
 
-  function closeMobileSidebar() {
-    state.mobileOpen = false;
-    el.sidebar.classList.remove('sidebar-mobile-open');
-    backdrop.classList.remove('active');
-    el.body.classList.remove('sidebar-mobile-locked');
-    if (el.hamburger) el.hamburger.setAttribute('aria-expanded', 'false');
-  }
-
-  function toggleMobileSidebar() {
-    if (state.mobileOpen) {
-      closeMobileSidebar();
+  function toggleSidebar() {
+    if (isMobile()) {
+      if (!sidebar) return;
+      const open = sidebar.classList.toggle('sidebar-mobile-open');
+      hamburgerBtn?.setAttribute('aria-expanded', String(open));
     } else {
-      openMobileSidebar();
+      if (!appShell) return;
+      const collapsed = appShell.classList.toggle('sidebar-collapsed');
+      localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0');
+      hamburgerBtn?.setAttribute('aria-expanded', String(!collapsed));
     }
   }
+
+  // Tapping outside the sidebar closes it on mobile
+  document.addEventListener('click', (e) => {
+    if (!isMobile() || !sidebar) return;
+    if (!sidebar.classList.contains('sidebar-mobile-open')) return;
+    if (sidebar.contains(e.target) || e.target === hamburgerBtn || hamburgerBtn?.contains(e.target)) return;
+    sidebar.classList.remove('sidebar-mobile-open');
+    hamburgerBtn?.setAttribute('aria-expanded', 'false');
+  });
+
+  // Re-evaluate collapse state on resize (e.g. rotating a tablet, or resizing a browser window)
+  window.addEventListener('resize', window.VoxUtils.debounce(() => {
+    if (isMobile()) {
+      appShell?.classList.remove('sidebar-collapsed');
+    } else {
+      sidebar?.classList.remove('sidebar-mobile-open');
+      applyStoredSidebarState();
+    }
+  }, 150));
+
+  hamburgerBtn?.addEventListener('click', toggleSidebar);
 
   /* ------------------------------------------------------------------------
-     5. HAMBURGER — routes to the right behavior for viewport size
+     2. THEME TOGGLE — dark/light, persisted in localStorage
      ------------------------------------------------------------------------ */
-  function handleHamburgerClick() {
-    if (isMobileViewport()) {
-      toggleMobileSidebar();
-    } else {
-      toggleCollapsed();
-    }
+  function updateThemeIcon(theme) {
+    if (!themeBtn) return;
+    const icon = themeBtn.querySelector('i');
+    if (!icon) return;
+    icon.className = theme === 'dark-mode' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
   }
 
-  // If the viewport crosses the breakpoint (e.g. rotating a tablet, resizing
-  // a window), make sure we're not stuck in a broken half-open state.
-  function handleResize() {
-    if (!isMobileViewport() && state.mobileOpen) {
-      closeMobileSidebar();
-    }
+  function applyStoredTheme() {
+    const stored = localStorage.getItem(THEME_KEY);
+    const theme = stored === 'light-mode' || stored === 'dark-mode'
+      ? stored
+      : (body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode');
+
+    body.classList.remove('dark-mode', 'light-mode');
+    body.classList.add(theme);
+    updateThemeIcon(theme);
   }
+
+  function toggleTheme() {
+    const isDark = body.classList.contains('dark-mode');
+    const nextTheme = isDark ? 'light-mode' : 'dark-mode';
+    body.classList.remove('dark-mode', 'light-mode');
+    body.classList.add(nextTheme);
+    localStorage.setItem(THEME_KEY, nextTheme);
+    updateThemeIcon(nextTheme);
+  }
+
+  themeBtn?.addEventListener('click', toggleTheme);
 
   /* ------------------------------------------------------------------------
-     6. ACTIVE LINK HIGHLIGHTING
+     3. ACTIVE NAV LINK (fallback for any page missing the .active class)
      ------------------------------------------------------------------------ */
-  function highlightActiveLink() {
-    const currentPage = (window.location.pathname.split('/').pop() || 'dashboard.html');
-
-    el.sidebarLinks.forEach((link) => {
+  function markActiveNavLink() {
+    const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+    document.querySelectorAll('.sidebar-link').forEach((link) => {
       const href = link.getAttribute('href');
       link.classList.toggle('active', href === currentPage);
     });
   }
 
   /* ------------------------------------------------------------------------
-     7. INIT
+     4. INIT
      ------------------------------------------------------------------------ */
-  function init() {
-    applyTheme(getStoredTheme());
-
-    const storedCollapsed = localStorage.getItem(STORAGE_KEYS.collapsed) === 'true';
-    applyCollapsed(storedCollapsed);
-
-    highlightActiveLink();
-
-    if (el.hamburger) {
-      el.hamburger.addEventListener('click', handleHamburgerClick);
-    }
-    if (el.themeToggle) {
-      el.themeToggle.addEventListener('click', toggleTheme);
-    }
-
-    backdrop.addEventListener('click', closeMobileSidebar);
-
-    // Close the mobile sidebar automatically after navigating
-    el.sidebarLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        if (isMobileViewport()) closeMobileSidebar();
-      });
-    });
-
-    // Escape key closes the mobile sidebar
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.mobileOpen) closeMobileSidebar();
-    });
-
-    window.addEventListener('resize', handleResize);
-  }
-
-  document.addEventListener('DOMContentLoaded', init);
+  applyStoredTheme();
+  applyStoredSidebarState();
+  markActiveNavLink();
 })();

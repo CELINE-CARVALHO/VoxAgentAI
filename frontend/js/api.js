@@ -116,6 +116,9 @@
     analyticsLanguages() { return request('/api/analytics/languages'); },
     analyticsSentiment(range = 'daily') { return request(`/api/analytics/sentiment?range=${range}`); },
     analyticsPerformance() { return request('/api/analytics/performance'); },
+    analyticsIntents() {
+        return request("/api/analytics/intents");
+    },
 
     // ---- settings / profile ----
     getSettings() { return request('/api/settings'); },

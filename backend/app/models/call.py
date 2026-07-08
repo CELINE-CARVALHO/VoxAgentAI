@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer, Float, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -12,7 +12,11 @@ from app.database import Base
 class Call(Base):
     __tablename__ = "calls"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
     call_ref = Column(String(50), unique=True, nullable=False, index=True)  # e.g. CALL-849213
 
     caller_name = Column(String(255), nullable=True, default="Unknown Caller")
@@ -29,7 +33,11 @@ class Call(Base):
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
 
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    owner_id = Column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=True
+    )
 
     transcripts = relationship(
         "Transcript", back_populates="call", cascade="all, delete-orphan",

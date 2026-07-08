@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, Text, Integer
-from sqlalchemy.dialects.postgresql import UUID
+
 
 from app.database import Base
 
@@ -11,7 +11,11 @@ from app.database import Base
 class KnowledgeDocument(Base):
     __tablename__ = "knowledge_documents"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
     filename = Column(String(500), nullable=False)
     file_type = Column(String(20), nullable=False)  # pdf | docx | txt | md
     size_bytes = Column(Integer, nullable=False, default=0)

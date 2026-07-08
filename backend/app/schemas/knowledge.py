@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 class KnowledgeDocOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    id: str
     filename: str
     file_type: str
     size_bytes: int

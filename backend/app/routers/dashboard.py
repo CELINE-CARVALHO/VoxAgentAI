@@ -54,6 +54,6 @@ def dashboard_status(current_user=Depends(get_current_user)):
     """
     return {
         "database": "online",
-        "llm_engine": "online" if settings.GEMINI_API_KEY else "not_configured",
+        "llm_engine": "online" if settings.GROQ_API_KEY else "not_configured",
         "checked_at": datetime.utcnow().isoformat(),
     }

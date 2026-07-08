@@ -1,4 +1,4 @@
-import uuid
+
 from datetime import datetime
 from typing import Optional
 
@@ -27,7 +27,7 @@ class UserUpdate(BaseModel):
 class UserOut(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    id: str
     role: str
     avatar_url: Optional[str] = None
     created_at: datetime

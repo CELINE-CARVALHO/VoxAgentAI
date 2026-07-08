@@ -6,7 +6,7 @@ the frontend's self-contained js/calls.js mock pipeline: same state machine
 Gemini instead of the in-browser keyword detector.
 """
 from typing import Optional
-from uuid import UUID
+
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
@@ -20,7 +20,7 @@ from app.schemas.call import (
     CallOut, CallDetailOut, PaginatedCalls,
 )
 from app.crud.call import create_call, add_transcript_turn, end_call
-from app.services.gemini_service import generate_call_turn, generate_greeting
+from app.services.groq_service import generate_call_turn, generate_greeting
 from app.services.rag_service import retrieve_context
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
@@ -56,7 +56,7 @@ def start_call(
 
 
 @router.get("/{call_id}", response_model=CallDetailOut)
-def get_call(call_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def get_call(call_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     call = db.query(Call).filter(Call.id == call_id).first()
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
@@ -65,7 +65,7 @@ def get_call(call_id: UUID, db: Session = Depends(get_db), current_user=Depends(
 
 @router.post("/{call_id}/message", response_model=MessageResponse)
 def send_message(
-    call_id: UUID,
+    call_id: str,
     payload: MessageRequest,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -108,7 +108,7 @@ def send_message(
 
 
 @router.post("/{call_id}/end", response_model=CallOut)
-def end_call_route(call_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def end_call_route(call_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     call = db.query(Call).filter(Call.id == call_id).first()
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
@@ -151,7 +151,7 @@ def list_calls(
 
 
 @router.delete("/{call_id}", status_code=204)
-def delete_call(call_id: UUID, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def delete_call(call_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     call = db.query(Call).filter(Call.id == call_id).first()
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")

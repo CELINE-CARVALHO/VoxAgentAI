@@ -10,7 +10,7 @@ expects (see analytics.html's Dependencies comment):
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, case
+from sqlalchemy import func, case, desc
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -29,6 +29,30 @@ RANGE_CONFIG = {
     "monthly": {"trunc": "month", "lookback": timedelta(days=365), "label_fmt": "%b"},
 }
 
+from app.config import settings
+
+def get_bucket(column, range_type):
+
+    if settings.DATABASE_URL.startswith("sqlite"):
+
+        if range_type == "daily":
+            return func.strftime("%Y-%m-%d", column)
+
+        if range_type == "weekly":
+            return func.strftime("%Y-%W", column)
+
+        if range_type == "monthly":
+            return func.strftime("%Y-%m", column)
+
+    if range_type == "daily":
+        return func.date_trunc("day", column)
+
+    if range_type == "weekly":
+        return func.date_trunc("week", column)
+
+    if range_type == "monthly":
+        return func.date_trunc("month", column)
+
 
 def _validate_range(range: str) -> dict:
     return RANGE_CONFIG.get(range, RANGE_CONFIG["daily"])
@@ -43,7 +67,7 @@ def call_volume(
     cfg = _validate_range(range)
     since = datetime.utcnow() - cfg["lookback"]
 
-    bucket = func.date_trunc(cfg["trunc"], Call.started_at)
+    bucket = get_bucket(Call.started_at, range)
     rows = (
         db.query(bucket.label("bucket"), func.count(Call.id).label("count"))
         .filter(Call.started_at >= since)
@@ -53,7 +77,7 @@ def call_volume(
     )
 
     points = [
-        TimeseriesPoint(label=row.bucket.strftime(cfg["label_fmt"]), value=row.count)
+        TimeseriesPoint(label=row.bucket, value=row.count)
         for row in rows
     ]
     return CallVolumeOut(range=range, points=points)
@@ -83,7 +107,7 @@ def sentiment_trend(
 ):
     cfg = _validate_range(range)
     since = datetime.utcnow() - cfg["lookback"]
-    bucket = func.date_trunc(cfg["trunc"], Call.started_at)
+    bucket = get_bucket(Call.started_at, range)
 
     rows = (
         db.query(
@@ -121,3 +145,49 @@ def performance(db: Session = Depends(get_db), current_user=Depends(get_current_
         total_calls=total_calls,
         resolution_rate=resolution_rate,
     )
+
+@router.get("/intents")
+def top_intents(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    Return the most common intents detected across completed calls.
+    """
+
+    rows = (
+        db.query(
+            Call.intent.label("intent"),
+            func.count(Call.id).label("count"),
+            func.avg(Call.duration_seconds).label("avg_duration"),
+        )
+        .filter(Call.intent.isnot(None))
+        .group_by(Call.intent)
+        .order_by(desc("count"))
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+
+    for row in rows:
+
+        sentiment = (
+            db.query(Call.sentiment)
+            .filter(Call.intent == row.intent)
+            .filter(Call.sentiment.isnot(None))
+            .first()
+        )
+
+        results.append(
+            {
+                "intent": row.intent,
+                "count": row.count,
+                "avg_sentiment": sentiment[0] if sentiment else "neutral",
+                "avg_duration": round(row.avg_duration or 0),
+            }
+        )
+
+    return results
+

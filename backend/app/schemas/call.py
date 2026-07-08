@@ -1,4 +1,4 @@
-import uuid
+
 from datetime import datetime
 from typing import Optional, List
 
@@ -32,7 +32,7 @@ class CallStartResponse(BaseModel):
 class CallOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    id: str
     call_ref: str
     caller_name: Optional[str]
     phone_number: Optional[str]

@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 class TranscriptOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    id: str
     speaker: str
     text: str
     language: Optional[str] = None
