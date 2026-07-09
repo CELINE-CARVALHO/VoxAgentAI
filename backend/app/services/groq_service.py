@@ -192,3 +192,61 @@ Sentiment must be neutral.
     result["latency_ms"] = latency
 
     return result
+
+
+SUMMARY_SYSTEM_PROMPT = """
+You are VoxAgent AI's post-call summarizer.
+
+You will be given the full transcript of a customer support voice call.
+
+Write a concise summary for a human agent who was not on the call.
+
+Rules:
+
+1. Plain text only. No markdown, no JSON, no headings, no bullet lists.
+2. 2 to 4 sentences maximum.
+3. Cover: why the caller reached out, what was resolved or discussed,
+   and any follow-up action still needed (or state that none is needed).
+4. Write in English regardless of the language the call happened in.
+5. Be factual. Do not invent details that are not in the transcript.
+"""
+
+
+def generate_call_summary(transcript_turns: list) -> Optional[dict]:
+    """
+    Summarize a completed call for the Call Logs / Conversation views.
+
+    transcript_turns: list of {"speaker": "user"|"ai", "text": str} dicts,
+    in chronological order (typically call.transcripts from the ORM).
+
+    Returns {"summary": str, "latency_ms": int}, or None if there is no
+    transcript to summarize (e.g. a call that ended before any turns).
+    """
+    if not transcript_turns:
+        return None
+
+    client = _client_instance()
+
+    conversation = "\n".join(
+        f"{turn['speaker']}: {turn['text']}" for turn in transcript_turns
+    )
+
+    start = time.perf_counter()
+
+    completion = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        temperature=0.2,
+        max_tokens=200,
+        messages=[
+            {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": f"Transcript:\n\n{conversation}"},
+        ],
+    )
+
+    latency = int((time.perf_counter() - start) * 1000)
+    summary_text = (completion.choices[0].message.content or "").strip()
+
+    if not summary_text:
+        return None
+
+    return {"summary": summary_text, "latency_ms": latency}

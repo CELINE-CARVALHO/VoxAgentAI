@@ -358,6 +358,11 @@
   color: var(--accent-red);
 }
 
+.status-missed {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--accent-red);
+}
+
 /* --------------------------------------------------------------------------
    6. FORM ELEMENTS (shared across Login, Settings, Knowledge Base, Filters)
    -------------------------------------------------------------------------- */

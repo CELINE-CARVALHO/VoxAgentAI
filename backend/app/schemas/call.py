@@ -42,6 +42,8 @@ class CallOut(BaseModel):
     sentiment: Optional[str]
     duration_seconds: Optional[int]
     avg_latency_ms: Optional[float]
+    summary: Optional[str] = None
+    summary_generated_at: Optional[datetime] = None
     started_at: datetime
     ended_at: Optional[datetime]
 

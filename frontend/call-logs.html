@@ -121,9 +121,9 @@
 
           <select class="form-select filter-select" id="filterStatus">
             <option value="">All Status</option>
+            <option value="active">Active</option>
             <option value="completed">Completed</option>
-            <option value="flagged">Flagged</option>
-            <option value="failed">Failed</option>
+            <option value="missed">Missed</option>
           </select>
 
           <button class="btn btn-outline" id="filterResetBtn">
@@ -138,7 +138,7 @@
       <div class="table-card glass-panel">
         <div class="table-card-header">
           <h3><i class="fa-solid fa-list"></i> All Calls</h3>
-          <span class="chart-badge" id="callCountBadge">128 calls found</span>
+          <span class="chart-badge" id="callCountBadge">0 calls found</span>
         </div>
 
         <div class="table-scroll">
@@ -155,84 +155,7 @@
               </tr>
             </thead>
             <tbody id="callLogsBody">
-              <tr data-call-id="C-10234">
-                <td class="cell-mono">#C-10234</td>
-                <td><span class="lang-pill">🇪🇸 Spanish</span></td>
-                <td>02:14</td>
-                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
-                <td><span class="status-tag status-completed">Completed</span></td>
-                <td>Jul 08, 2026 · 09:41 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10234" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-call-id="C-10233">
-                <td class="cell-mono">#C-10233</td>
-                <td><span class="lang-pill">🇫🇷 French</span></td>
-                <td>01:47</td>
-                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
-                <td><span class="status-tag status-completed">Completed</span></td>
-                <td>Jul 08, 2026 · 09:32 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10233" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-call-id="C-10232">
-                <td class="cell-mono">#C-10232</td>
-                <td><span class="lang-pill">🇮🇳 Hindi</span></td>
-                <td>03:02</td>
-                <td><span class="sentiment-tag sentiment-negative-tag">Negative</span></td>
-                <td><span class="status-tag status-flagged">Flagged</span></td>
-                <td>Jul 08, 2026 · 09:25 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10232" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-call-id="C-10231">
-                <td class="cell-mono">#C-10231</td>
-                <td><span class="lang-pill">🇬🇧 English</span></td>
-                <td>01:05</td>
-                <td><span class="sentiment-tag sentiment-positive-tag">Positive</span></td>
-                <td><span class="status-tag status-completed">Completed</span></td>
-                <td>Jul 08, 2026 · 09:17 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10231" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-call-id="C-10230">
-                <td class="cell-mono">#C-10230</td>
-                <td><span class="lang-pill">🇩🇪 German</span></td>
-                <td>02:38</td>
-                <td><span class="sentiment-tag sentiment-neutral-tag">Neutral</span></td>
-                <td><span class="status-tag status-completed">Completed</span></td>
-                <td>Jul 08, 2026 · 09:10 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10230" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-call-id="C-10229">
-                <td class="cell-mono">#C-10229</td>
-                <td><span class="lang-pill">🇮🇹 Italian</span></td>
-                <td>00:52</td>
-                <td><span class="sentiment-tag sentiment-negative-tag">Negative</span></td>
-                <td><span class="status-tag status-failed">Failed</span></td>
-                <td>Jul 08, 2026 · 08:58 AM</td>
-                <td>
-                  <button class="table-icon-btn view-transcript-btn" data-call-id="C-10229" title="View transcript">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </td>
-              </tr>
+              <!-- Rows are rendered by js/call_logs.js from GET /api/calls -->
             </tbody>
           </table>
         </div>
@@ -249,13 +172,9 @@
             <i class="fa-solid fa-chevron-left"></i> Previous
           </button>
           <div class="pagination-pages" id="paginationPages">
-            <button class="pagination-page active">1</button>
-            <button class="pagination-page">2</button>
-            <button class="pagination-page">3</button>
-            <span class="pagination-ellipsis">…</span>
-            <button class="pagination-page">13</button>
+            <!-- Page buttons are rendered by js/call_logs.js -->
           </div>
-          <button class="pagination-btn" id="paginationNext">
+          <button class="pagination-btn" id="paginationNext" disabled>
             Next <i class="fa-solid fa-chevron-right"></i>
           </button>
         </div>
@@ -271,45 +190,16 @@
 <div class="modal-overlay" id="transcriptModal">
   <div class="modal-box glass-panel transcript-modal-box">
     <div class="modal-header">
-      <h3><i class="fa-solid fa-file-lines"></i> Transcript — <span id="transcriptModalCallId">#C-10234</span></h3>
+      <h3><i class="fa-solid fa-file-lines"></i> Transcript — <span id="transcriptModalCallId">—</span></h3>
       <button class="modal-close" id="transcriptModalClose"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
-    <div class="transcript-modal-meta">
-      <span><i class="fa-solid fa-language"></i> Spanish (es-ES)</span>
-      <span><i class="fa-solid fa-clock"></i> 02:14</span>
-      <span><i class="fa-solid fa-face-smile"></i> Positive sentiment</span>
+    <div class="transcript-modal-meta" id="transcriptModalMeta">
+      <!-- Populated by js/call_logs.js -->
     </div>
 
     <div class="modal-body transcript-modal-scroll" id="transcriptModalBody">
-      <div class="turn turn-user">
-        <div class="turn-avatar"><i class="fa-solid fa-user"></i></div>
-        <div class="turn-bubble">
-          <p class="turn-text">¿Cuál es el estado de mi pedido #4521?</p>
-          <span class="turn-meta">09:41:02 AM</span>
-        </div>
-      </div>
-      <div class="turn turn-ai">
-        <div class="turn-avatar"><i class="fa-solid fa-robot"></i></div>
-        <div class="turn-bubble">
-          <p class="turn-text">Tu pedido #4521 fue enviado ayer y llega el jueves.</p>
-          <span class="turn-meta">Gemini · 310ms</span>
-        </div>
-      </div>
-      <div class="turn turn-user">
-        <div class="turn-avatar"><i class="fa-solid fa-user"></i></div>
-        <div class="turn-bubble">
-          <p class="turn-text">Perfecto, muchas gracias por la ayuda.</p>
-          <span class="turn-meta">09:41:38 AM</span>
-        </div>
-      </div>
-      <div class="turn turn-ai">
-        <div class="turn-avatar"><i class="fa-solid fa-robot"></i></div>
-        <div class="turn-bubble">
-          <p class="turn-text">De nada. ¿Hay algo más en lo que pueda ayudarte?</p>
-          <span class="turn-meta">Gemini · 280ms</span>
-        </div>
-      </div>
+      <!-- Populated by js/call_logs.js from GET /api/calls/:id -->
     </div>
 
     <div class="modal-actions">

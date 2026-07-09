@@ -5,6 +5,7 @@ the frontend's self-contained js/calls.js mock pipeline: same state machine
 (start/message/end), but language/intent/sentiment/response now come from
 Gemini instead of the in-browser keyword detector.
 """
+import logging
 from typing import Optional
 
 
@@ -19,11 +20,12 @@ from app.schemas.call import (
     CallStartRequest, MessageRequest, MessageResponse, CallStartResponse,
     CallOut, CallDetailOut, PaginatedCalls,
 )
-from app.crud.call import create_call, add_transcript_turn, end_call
-from app.services.groq_service import generate_call_turn, generate_greeting
+from app.crud.call import create_call, add_transcript_turn, end_call, save_call_summary
+from app.services.groq_service import generate_call_turn, generate_greeting, generate_call_summary
 from app.services.rag_service import retrieve_context
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/start", response_model=CallStartResponse, status_code=201)
@@ -112,7 +114,20 @@ def end_call_route(call_id: str, db: Session = Depends(get_db), current_user=Dep
     call = db.query(Call).filter(Call.id == call_id).first()
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
-    return end_call(db, call)
+
+    call = end_call(db, call)
+
+    # Post-call summary is best-effort: a slow/unavailable LLM should never
+    # block the caller from ending the call or seeing it in Call Logs.
+    try:
+        history = [{"speaker": t.speaker, "text": t.text} for t in call.transcripts]
+        summary_result = generate_call_summary(history)
+        if summary_result:
+            call = save_call_summary(db, call, summary_result["summary"])
+    except Exception as exc:
+        logger.warning("Call summary generation failed for call %s: %s", call_id, exc)
+
+    return call
 
 
 @router.get("", response_model=PaginatedCalls)

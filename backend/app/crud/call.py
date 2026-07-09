@@ -75,3 +75,11 @@ def end_call(db: Session, call: Call) -> Call:
     db.commit()
     db.refresh(call)
     return call
+
+
+def save_call_summary(db: Session, call: Call, summary: str) -> Call:
+    call.summary = summary
+    call.summary_generated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(call)
+    return call

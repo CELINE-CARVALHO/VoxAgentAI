@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Overrides whatever DATABASE_URL is set in .env, so the SQLite file
+      # always lands on the persistent named volume below rather than the
+      # container's ephemeral filesystem.
+      DATABASE_URL: sqlite:////app/db/voxagent.db
+    volumes:
+      - voxagent-db:/app/db
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  voxagent-db:
+    driver: local

@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Integer, Float, ForeignKey
+from sqlalchemy import Column, String, DateTime, Integer, Float, ForeignKey, Text
 
 from sqlalchemy.orm import relationship
 
@@ -29,6 +29,9 @@ class Call(Base):
 
     duration_seconds = Column(Integer, nullable=True, default=0)
     avg_latency_ms = Column(Float, nullable=True, default=0)
+
+    summary = Column(Text, nullable=True)  # AI-generated post-call summary (LLM, set on call end)
+    summary_generated_at = Column(DateTime, nullable=True)
 
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
