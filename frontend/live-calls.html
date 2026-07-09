@@ -1,288 +1,258 @@
-/* ==========================================================================
-   VoxAgent AI — calls.js
-   Live Call console driven by the real backend: /api/calls/start,
-   /api/calls/:id/message, /api/calls/:id/end. Language/intent/sentiment/
-   response now come from Gemini server-side instead of the old in-browser
-   keyword detector. Web Speech API is layered on top purely as an optional
-   convenience for STT input and TTS playback — the pipeline works fine
-   with the manual text input alone.
-   ========================================================================== */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Calls - VoxAgent AI</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+<style>
+  .hidden { display: none !important; }
 
-(function () {
-  'use strict';
-
-  if (document.body.getAttribute('data-page') !== 'live-calls') return;
-  if (!window.VoxAPI.isAuthenticated()) { window.location.href = 'login.html'; return; }
-
-  const { toast, formatDuration } = window.VoxUtils;
-
-  /* ------------------------------------------------------------------------
-     1. DOM REFERENCES (matches the shipped live-calls.html markup)
-     ------------------------------------------------------------------------ */
-  const el = {
-    statusDot: document.getElementById('callStatusDot'),
-    statusText: document.getElementById('callStatusText'),
-    timer: document.getElementById('callTimer'),
-    transcript: document.getElementById('callTranscript'),
-    emptyState: document.getElementById('callEmptyState'),
-    startBtn: document.getElementById('startCallBtn'),
-    endBtn: document.getElementById('endCallBtn'),
-    messageInput: document.getElementById('messageInput'),
-    sendBtn: document.getElementById('sendMessageBtn'),
-  };
-
-  /* ------------------------------------------------------------------------
-     2. STATE
-     ------------------------------------------------------------------------ */
-  const state = {
-    callId: null,
-    active: false,
-    sending: false,
-    startTime: null,
-    timerInterval: null,
-    recognition: null,
-    recognitionSupported: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
-    synthSupported: !!window.speechSynthesis,
-  };
-
-  const BCP47_BY_LANG = {
-    en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE',
-    hi: 'hi-IN', pt: 'pt-PT', ja: 'ja-JP', zh: 'zh-CN',
-    ar: 'ar-SA', ru: 'ru-RU', it: 'it-IT', ko: 'ko-KR',
-  };
-
-  /* ------------------------------------------------------------------------
-     3. UI HELPERS
-     ------------------------------------------------------------------------ */
-  function formatTimer(ms) {
-    const totalSec = Math.max(0, Math.floor(ms / 1000));
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  .btn-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
   }
 
-  function setStatus(text, live) {
-    el.statusText.textContent = text;
-    el.statusDot.style.display = live ? '' : 'none';
+  .btn-icon:hover {
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
   }
 
-  function appendTurn(role, text, metaText) {
-    if (el.emptyState && !el.emptyState.hidden) el.emptyState.hidden = true;
-
-    const turnEl = document.createElement('div');
-    turnEl.className = `turn turn-${role}`;
-    turnEl.style.cssText = 'display:flex; gap:var(--space-3); align-items:flex-start;' +
-      (role === 'user' ? ' flex-direction:row-reverse;' : '');
-
-    const avatarEl = document.createElement('div');
-    avatarEl.className = 'turn-avatar';
-    avatarEl.innerHTML = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
-
-    const bubbleEl = document.createElement('div');
-    bubbleEl.className = 'turn-bubble';
-
-    const textEl = document.createElement('p');
-    textEl.className = 'turn-text';
-    textEl.textContent = text;
-
-    bubbleEl.appendChild(textEl);
-    if (metaText) {
-      const metaEl = document.createElement('span');
-      metaEl.className = 'turn-meta text-muted';
-      metaEl.style.cssText = 'font-size:var(--fs-xs); display:block; margin-top:4px;';
-      metaEl.textContent = metaText;
-      bubbleEl.appendChild(metaEl);
-    }
-
-    turnEl.appendChild(avatarEl);
-    turnEl.appendChild(bubbleEl);
-    el.transcript.appendChild(turnEl);
-    el.transcript.scrollTop = el.transcript.scrollHeight;
+  .btn-secondary {
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
   }
 
-  function currentTimeLabel() {
-    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  .btn-secondary:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
   }
 
-  /* ------------------------------------------------------------------------
-     4. TIMER
-     ------------------------------------------------------------------------ */
-  function startTimer() {
-    state.startTime = Date.now();
-    state.timerInterval = setInterval(() => {
-      el.timer.textContent = formatTimer(Date.now() - state.startTime);
-    }, 1000);
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fecaca;
   }
 
-  function stopTimer() {
-    clearInterval(state.timerInterval);
-    state.timerInterval = null;
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.22);
+    border-color: var(--accent-red);
   }
 
-  /* ------------------------------------------------------------------------
-     5. TEXT-TO-SPEECH (optional playback of the AI's reply)
-     ------------------------------------------------------------------------ */
-  function speak(text, langCode) {
-    if (!state.synthSupported) return;
-    const bcp47 = BCP47_BY_LANG[langCode] || 'en-US';
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = bcp47;
-
-    const voices = window.speechSynthesis.getVoices();
-    const matchedVoice = voices.find((v) => v.lang === bcp47) || voices.find((v) => v.lang.startsWith(langCode));
-    if (matchedVoice) utterance.voice = matchedVoice;
-
-    window.speechSynthesis.speak(utterance);
+  .live-call-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
   }
 
-  /* ------------------------------------------------------------------------
-     6. SPEECH RECOGNITION (optional STT input — falls back to typing)
-     ------------------------------------------------------------------------ */
-  function createRecognition() {
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      const transcript = lastResult[0].transcript;
-      sendUtterance(transcript);
-    };
-
-    recognition.onerror = (event) => {
-      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-        toast('Microphone access denied — you can still type messages below.', 'error');
-      }
-    };
-
-    recognition.onend = () => {
-      if (state.active) {
-        try { recognition.start(); } catch (e) { /* already started */ }
-      }
-    };
-
-    return recognition;
+  .call-control-card,
+  .call-transcript-card {
+    padding: var(--space-5);
   }
 
-  /* ------------------------------------------------------------------------
-     7. CORE PIPELINE — send an utterance to the real backend
-     ------------------------------------------------------------------------ */
-  async function sendUtterance(rawText) {
-    const text = rawText.trim();
-    if (!text || !state.active || state.sending || !state.callId) return;
+  .call-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-5);
+  }
 
-    appendTurn('user', text, currentTimeLabel());
-    state.sending = true;
-    setStatus('Thinking…', true);
-    el.sendBtn.disabled = true;
+  .call-timer {
+    font-family: var(--font-display);
+    font-size: var(--fs-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-5);
+  }
 
-    try {
-      const result = await window.VoxAPI.sendMessage(state.callId, text);
-      appendTurn('ai', result.reply, `${result.language?.toUpperCase() || 'EN'} · ${result.intent || 'general'} · ${result.sentiment || 'neutral'} · ${result.latency_ms ?? 0}ms`);
-      speak(result.reply, result.language);
-    } catch (err) {
-      toast(err.message, 'error');
-      appendTurn('ai', "Sorry, something went wrong reaching the AI agent.", 'error');
-    } finally {
-      state.sending = false;
-      setStatus('Listening…', true);
-      el.sendBtn.disabled = false;
+  .call-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .call-transcript {
+    min-height: 420px;
+    max-height: 58vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding-right: var(--space-2);
+  }
+
+  .turn-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  }
+
+  .turn-user .turn-avatar {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-glass);
+  }
+
+  .turn-bubble {
+    max-width: min(68ch, 78%);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+  }
+
+  .turn-user .turn-bubble {
+    background: rgba(79, 140, 255, 0.12);
+  }
+
+  .turn-text {
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .message-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+
+  .message-composer .btn {
+    border-radius: var(--radius-sm);
+  }
+
+  @media (max-width: 900px) {
+    .live-call-layout {
+      grid-template-columns: 1fr;
     }
   }
+</style>
+</head>
+<body class="dark-mode" data-page="live-calls">
+<div class="bg-decoration"><div class="bg-glow bg-glow-1"></div><div class="bg-glow bg-glow-2"></div><div class="bg-grid"></div></div>
 
-  /* ------------------------------------------------------------------------
-     8. CALL CONTROL ACTIONS
-     ------------------------------------------------------------------------ */
-  async function startCall() {
-    el.startBtn.disabled = true;
-    setStatus('Connecting…', true);
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-headset"></i></div>
+      <span class="logo-text">Vox<span class="logo-accent">Agent</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+      <a href="live-calls.html" class="sidebar-link active"><i class="fa-solid fa-phone-volume"></i><span>Live Calls</span></a>
+      <a href="call-logs.html" class="sidebar-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Call Logs</span></a>
+      <a href="knowledge.html" class="sidebar-link"><i class="fa-solid fa-book"></i><span>Knowledge Base</span></a>
+      <a href="analytics.html" class="sidebar-link"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <div class="sidebar-divider"></div>
+      <a href="settings.html" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="profile.html" class="sidebar-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="sidebar-status"><span class="pulse-dot"></span><span>AI Engine Online</span></div></div>
+  </aside>
 
-    try {
-      const { call, greeting } = await window.VoxAPI.startCall({});
-      state.callId = call.id;
-      state.active = true;
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-icon sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="topbar-title">Live Calls</div>
+          <div class="topbar-subtitle">Talk to the AI voice agent through the real call pipeline.</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-icon" id="themeToggle" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+        <div class="topbar-avatar" id="topbarAvatar"><div class="avatar-fallback">A</div></div>
+      </div>
+    </header>
 
-      startTimer();
-      setStatus('Listening…', true);
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>Live Call Console</h1>
+          <p>Start a session, type a customer message, and review the agent response in real time.</p>
+        </div>
+      </div>
 
-      el.startBtn.classList.add('hidden');
-      el.endBtn.classList.remove('hidden');
-      el.messageInput.classList.remove('hidden');
-      el.sendBtn.classList.remove('hidden');
-      el.messageInput.disabled = false;
-      el.sendBtn.disabled = false;
-      el.messageInput.focus();
+      <div class="live-call-layout">
+        <section class="call-control-card glass-panel" aria-labelledby="callControlTitle">
+          <div class="chart-card-header">
+            <h3 id="callControlTitle"><i class="fa-solid fa-phone"></i> Call Control</h3>
+          </div>
 
-      appendTurn('ai', greeting.reply, `${greeting.language?.toUpperCase() || 'EN'} · greeting · ${greeting.latency_ms ?? 0}ms`);
-      speak(greeting.reply, greeting.language);
+          <div class="call-status">
+            <span class="pulse-dot pulse-dot-sm" id="callStatusDot" style="display:none"></span>
+            <span id="callStatusText">No active call</span>
+          </div>
 
-      if (state.recognitionSupported) {
-        state.recognition = createRecognition();
-        try { state.recognition.start(); } catch (e) { console.warn('Speech recognition could not start:', e); }
-      }
-    } catch (err) {
-      toast(err.message, 'error');
-      setStatus('No active call', false);
-      el.startBtn.disabled = false;
-    }
-  }
+          <div class="call-timer" id="callTimer">00:00</div>
 
-  async function endCall() {
-    const callId = state.callId;
-    state.active = false;
+          <div class="call-actions">
+            <button class="btn btn-primary" id="startCallBtn">
+              <i class="fa-solid fa-phone"></i> Start Call
+            </button>
+            <button class="btn btn-danger hidden" id="endCallBtn">
+              <i class="fa-solid fa-phone-slash"></i> End Call
+            </button>
+            <a href="call-logs.html" class="btn btn-secondary">
+              <i class="fa-solid fa-clock-rotate-left"></i> View Logs
+            </a>
+          </div>
+        </section>
 
-    stopTimer();
-    setStatus('Ending call…', false);
-    if (state.recognition) {
-      state.recognition.onend = null;
-      state.recognition.stop();
-    }
-    if (state.synthSupported) window.speechSynthesis.cancel();
+        <section class="call-transcript-card glass-panel" aria-labelledby="transcriptTitle">
+          <div class="chart-card-header">
+            <h3 id="transcriptTitle"><i class="fa-solid fa-comments"></i> Transcript</h3>
+            <span class="chart-badge">Gemini powered</span>
+          </div>
 
-    el.endBtn.disabled = true;
-    try {
-      if (callId) await window.VoxAPI.endCall(callId);
-    } catch (err) {
-      toast(err.message, 'error');
-    }
+          <div class="call-transcript" id="callTranscript" aria-live="polite">
+            <div class="empty-state" id="callEmptyState">
+              <i class="fa-solid fa-headset"></i>
+              <p>No call is active. Start a call to begin the transcript.</p>
+            </div>
+          </div>
 
-    state.callId = null;
-    setStatus('No active call', false);
-    el.startBtn.classList.remove('hidden');
-    el.startBtn.disabled = false;
-    el.endBtn.classList.add('hidden');
-    el.endBtn.disabled = false;
-    el.messageInput.classList.add('hidden');
-    el.sendBtn.classList.add('hidden');
-    el.messageInput.value = '';
-    el.messageInput.disabled = true;
-    el.sendBtn.disabled = true;
-    el.timer.textContent = '00:00';
-  }
+          <div class="message-composer">
+            <input type="text" class="form-input hidden" id="messageInput" placeholder="Type a customer message..." disabled>
+            <button class="btn btn-primary hidden" id="sendMessageBtn" disabled>
+              <i class="fa-solid fa-paper-plane"></i> Send
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
 
-  /* ------------------------------------------------------------------------
-     9. EVENT BINDINGS
-     ------------------------------------------------------------------------ */
-  el.startBtn.addEventListener('click', startCall);
-  el.endBtn.addEventListener('click', endCall);
-  el.sendBtn.addEventListener('click', () => {
-    const text = el.messageInput.value;
-    if (!text.trim()) return;
-    sendUtterance(text);
-    el.messageInput.value = '';
-  });
-  el.messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      el.sendBtn.click();
-    }
-  });
+<div class="toast-container" id="toastContainer"></div>
 
-  if (state.synthSupported) {
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-  }
-})();
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/calls.js"></script>
+</body>
+</html>
