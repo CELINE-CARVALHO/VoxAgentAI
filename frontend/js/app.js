@@ -1,12 +1,25 @@
 /* ==========================================================================
    VoxAgent AI — app.js
-   Cross-page shell behavior: sidebar collapse (desktop) / mobile slide-in,
-   theme toggle (dark/light, persisted), and active nav link highlighting.
+   Cross-page shell behavior: auth guard, sidebar collapse (desktop) /
+   mobile slide-in, theme toggle (dark/light, persisted), and active nav
+   link highlighting.
    Loaded on every page, after utils.js and api.js, before page-specific
    scripts (e.g. calls.js, knowledge.js, analytics.js).
    ========================================================================== */
 (function () {
   'use strict';
+
+  /* ------------------------------------------------------------------------
+     0. AUTH GUARD — redirect unauthenticated visitors away from protected
+     pages before any layout or data renders. Runs first and returns early
+     so nothing else in this file wires up on a page we're navigating away
+     from. Public pages that don't load api.js (e.g. the landing page)
+     skip this safely since window.VoxAPI is undefined there.
+     ------------------------------------------------------------------------ */
+  if (typeof window.VoxAPI !== 'undefined' && !window.VoxAPI.isAuthenticated()) {
+    window.location.href = 'login.html';
+    return;
+  }
 
   const THEME_KEY = 'voxagent-theme';
   const SIDEBAR_KEY = 'voxagent-sidebar-collapsed';

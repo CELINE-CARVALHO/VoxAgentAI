@@ -2,12 +2,20 @@
 VoxAgent AI backend entrypoint.
 Run with: uvicorn app.main:app --reload --port 8000
 """
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.config import settings
-from app.database import init_db
+from app.database import init_db, SessionLocal
 from app.routers import auth, dashboard, calls, knowledge, analytics, settings as settings_router, profile
+
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -41,4 +49,22 @@ def on_startup():
 
 @app.get("/api/health", tags=["health"])
 def health_check():
-    return {"status": "ok", "service": settings.APP_NAME}
+    db_status = "ok"
+    try:
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+        finally:
+            db.close()
+    except Exception as exc:
+        db_status = f"error: {exc}"
+
+    overall_ok = db_status == "ok"
+
+    return {
+        "status": "ok" if overall_ok else "degraded",
+        "service": settings.APP_NAME,
+        "env": settings.ENV,
+        "database": db_status,
+        "llm_configured": bool(settings.GROQ_API_KEY),
+    }

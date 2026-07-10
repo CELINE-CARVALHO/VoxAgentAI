@@ -29,6 +29,28 @@ RANGE_CONFIG = {
     "monthly": {"trunc": "month", "lookback": timedelta(days=365), "label_fmt": "%b"},
 }
 
+
+from datetime import datetime
+
+def format_bucket(bucket, fmt):
+    # SQLite returns string
+    if isinstance(bucket, str):
+        try:
+            if len(bucket) == 10:      # YYYY-MM-DD
+                dt = datetime.strptime(bucket, "%Y-%m-%d")
+            elif len(bucket) == 7:     # YYYY-MM
+                dt = datetime.strptime(bucket, "%Y-%m")
+            else:                      # YYYY-WW
+                dt = datetime.strptime(bucket + "-1", "%Y-%W-%w")
+
+            return dt.strftime(fmt)
+        except Exception:
+            return bucket
+
+    # PostgreSQL returns datetime
+    return bucket.strftime(fmt)
+
+
 from app.config import settings
 
 def get_bucket(column, range_type):
@@ -124,9 +146,27 @@ def sentiment_trend(
 
     return SentimentTrendOut(
         range=range,
-        positive=[TimeseriesPoint(label=r.bucket.strftime(cfg["label_fmt"]), value=r.positive) for r in rows],
-        neutral=[TimeseriesPoint(label=r.bucket.strftime(cfg["label_fmt"]), value=r.neutral) for r in rows],
-        negative=[TimeseriesPoint(label=r.bucket.strftime(cfg["label_fmt"]), value=r.negative) for r in rows],
+        positive=[
+            TimeseriesPoint(
+                label=format_bucket(r.bucket, cfg["label_fmt"]),
+                value=r.positive or 0,
+            )
+            for r in rows
+        ],
+        neutral=[
+            TimeseriesPoint(
+                label=format_bucket(r.bucket, cfg["label_fmt"]),
+                value=r.neutral or 0,
+            )
+            for r in rows
+        ],
+        negative=[
+            TimeseriesPoint(
+                label=format_bucket(r.bucket, cfg["label_fmt"]),
+                value=r.negative or 0,
+            )
+            for r in rows
+        ],
     )
 
 
