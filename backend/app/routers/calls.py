@@ -23,6 +23,7 @@ from app.schemas.call import (
 from app.crud.call import create_call, add_transcript_turn, end_call, save_call_summary
 from app.services.groq_service import generate_call_turn, generate_greeting, generate_call_summary
 from app.services.rag_service import retrieve_context
+from app.services import memory_service
 
 router = APIRouter(prefix="/api/calls", tags=["calls"])
 logger = logging.getLogger(__name__)
@@ -84,12 +85,20 @@ def send_message(
     # 2. Ground the response in the knowledge base
     context = retrieve_context(db, payload.text)
 
-    # 3. Build short conversation history for context continuity
-    history = [{"speaker": t.speaker, "text": t.text} for t in call.transcripts]
+    # 3. Assemble conversation memory: recent turns (verbatim) + rolling
+    #    long-term summary of everything older + the RAG context above.
+    #    Replaces the previous approach of passing every transcript in the
+    #    call unbounded and letting the LLM service silently truncate it.
+    memory = memory_service.get_memory_bundle(db, call, rag_context=context)
 
-    # 4. Ask Gemini for language + intent + sentiment + response in one call
+    # 4. Ask the LLM for language + intent + sentiment + response in one call
     try:
-        result = generate_call_turn(payload.text, knowledge_context=context, conversation_history=history)
+        result = generate_call_turn(
+            payload.text,
+            knowledge_context=memory["rag_context"],
+            conversation_history=memory["recent_turns"],
+            long_term_summary=memory["long_term_summary"],
+        )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"LLM generation failed: {exc}")
 

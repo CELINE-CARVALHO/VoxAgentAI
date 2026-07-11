@@ -11,6 +11,8 @@ from sqlalchemy import text
 from app.config import settings
 from app.database import init_db, SessionLocal
 from app.routers import auth, dashboard, calls, knowledge, analytics, settings as settings_router, profile
+from app.routers import voice
+from app.routers import ws
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -38,6 +40,8 @@ app.include_router(knowledge.router)
 app.include_router(analytics.router)
 app.include_router(settings_router.router)
 app.include_router(profile.router)
+app.include_router(voice.router)
+app.include_router(ws.router)
 
 
 @app.on_event("startup")

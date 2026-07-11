@@ -23,6 +23,7 @@ from typing import Optional
 from groq import Groq
 
 from app.config import settings
+from app.services.response_validator import validate_response
 
 _client = None
 
@@ -94,7 +95,14 @@ def generate_call_turn(
     user_text: str,
     knowledge_context: str = "",
     conversation_history: Optional[list] = None,
+    long_term_summary: str = "",
 ):
+    """
+    conversation_history is expected to already be the recent-turns window
+    the caller wants sent verbatim (see services/memory_service.py) — this
+    function no longer re-slices it, so the caller controls the window size
+    instead of two different constants disagreeing with each other.
+    """
     client = _client_instance()
 
     history = ""
@@ -102,15 +110,25 @@ def generate_call_turn(
     if conversation_history:
         history = "\n".join(
             f"{m['speaker']}: {m['text']}"
-            for m in conversation_history[-6:]
+            for m in conversation_history
         )
+
+    summary_block = (
+        f"""
+Long-Term Summary (earlier parts of this call):
+
+{long_term_summary}
+"""
+        if long_term_summary
+        else ""
+    )
 
     prompt = f"""
 Knowledge Base:
 
 {knowledge_context}
-
-Conversation:
+{summary_block}
+Recent Conversation:
 
 {history}
 
@@ -192,6 +210,7 @@ Sentiment must be neutral.
     result["latency_ms"] = latency
 
     return result
+    parsed = validate_response(parsed)
 
 
 SUMMARY_SYSTEM_PROMPT = """
@@ -250,3 +269,70 @@ def generate_call_summary(transcript_turns: list) -> Optional[dict]:
         return None
 
     return {"summary": summary_text, "latency_ms": latency}
+
+
+MEMORY_SUMMARY_SYSTEM_PROMPT = """
+You are VoxAgent AI's rolling conversation memory summarizer.
+
+You maintain a running summary of an in-progress customer support voice call
+so the AI can remember earlier parts of a long call without re-reading the
+full transcript every turn.
+
+You will be given:
+1. The existing summary so far (may be empty, if this is the first refresh).
+2. A new slice of conversation turns that just aged out of the recent window.
+
+Rules:
+
+1. Plain text only. No markdown, no JSON, no headings, no bullet lists.
+2. Merge the new turns into the existing summary — do not just append,
+   actually integrate them so the result reads as one coherent summary.
+3. Keep it factual. Do not invent details that are not in the turns given.
+4. Preserve concrete facts a later turn might need: names, order/ticket
+   numbers, stated problems, promises made, decisions reached.
+5. Keep it as short as possible while preserving those facts — target
+   4 to 8 sentences even as the call grows longer; compress older,
+   already-summarized material further to make room for new facts.
+6. Write in English regardless of the language the call is happening in.
+"""
+
+
+def update_memory_summary(existing_summary: str, new_turns: list) -> Optional[str]:
+    """
+    Folds `new_turns` (list of {"speaker", "text"} dicts, chronological) into
+    `existing_summary`, returning the updated rolling summary, or None if
+    there was nothing to summarize or the LLM call failed to produce text.
+
+    This is called by services/memory_service.py, not directly by routers.
+    """
+    if not new_turns:
+        return existing_summary or None
+
+    client = _client_instance()
+
+    new_turns_text = "\n".join(
+        f"{turn['speaker']}: {turn['text']}" for turn in new_turns
+    )
+
+    user_content = f"""
+Existing Summary:
+
+{existing_summary or "(none yet — this is the first refresh)"}
+
+New Turns To Merge In:
+
+{new_turns_text}
+"""
+
+    completion = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        temperature=0.2,
+        max_tokens=250,
+        messages=[
+            {"role": "system", "content": MEMORY_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
+        ],
+    )
+
+    updated = (completion.choices[0].message.content or "").strip()
+    return updated or (existing_summary or None)

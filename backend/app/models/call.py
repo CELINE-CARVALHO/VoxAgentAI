@@ -33,6 +33,14 @@ class Call(Base):
     summary = Column(Text, nullable=True)  # AI-generated post-call summary (LLM, set on call end)
     summary_generated_at = Column(DateTime, nullable=True)
 
+    # Rolling in-call conversation memory (Phase 3 — services/memory_service.py).
+    # Distinct from `summary` above: that one is a single post-call wrap-up
+    # written once when the call ends; this one is updated incrementally
+    # *during* the call so the AI can recall turns that have aged out of the
+    # verbatim recent-turns window it sends on every request.
+    memory_summary = Column(Text, nullable=True)
+    memory_summary_turns_covered = Column(Integer, nullable=False, default=0)
+
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
 
