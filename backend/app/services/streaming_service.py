@@ -1,28 +1,35 @@
 """
 streaming_service.py
 
-Central AI streaming pipeline.
+Central orchestration layer for VoxAgent AI.
 
-Responsibilities
+Flow:
 
-Browser
-      │
-      ▼
-WebSocket
-      │
-      ▼
-Streaming Service
-      │
-      ├── Conversation Memory
-      ├── Language Detection
-      ├── Knowledge Retrieval (RAG)
-      ├── Prompt Builder
-      ├── Groq
-      ├── Response Validation
-      └── Return JSON
-
-No frontend code belongs here.
-No websocket code belongs here.
+Incoming Message
+        │
+        ▼
+Conversation Memory
+        │
+        ▼
+Language Detection
+        │
+        ▼
+Knowledge Retrieval (RAG)
+        │
+        ▼
+Prompt Builder
+        │
+        ▼
+Groq
+        │
+        ▼
+Response Validation
+        │
+        ▼
+Store AI Response
+        │
+        ▼
+Return JSON
 """
 
 from sqlalchemy.orm import Session
@@ -31,8 +38,8 @@ from app.services.memory_service import memory_manager
 from app.services.language_service import detect_language
 from app.services.rag_service import retrieve_context
 from app.services.prompt_builder import build_prompt
-from app.services.response_validator import validate_response
 from app.services.groq_service import generate_call_turn
+from app.services.response_validator import validate_response
 
 
 class StreamingService:
@@ -45,9 +52,9 @@ class StreamingService:
         user_text: str,
     ) -> dict:
 
-        # ----------------------------
-        # Get conversation memory
-        # ----------------------------
+        # ---------------------------------------------------------
+        # Get Memory
+        # ---------------------------------------------------------
 
         memory = memory_manager.get(session_id)
 
@@ -58,62 +65,122 @@ class StreamingService:
 
         history = memory.history()
 
-        # ----------------------------
-        # Detect language
-        # ----------------------------
+        summary = memory.long_term_summary
+
+        # ---------------------------------------------------------
+        # Language Detection
+        # ---------------------------------------------------------
 
         language = detect_language(user_text)
 
-        # ----------------------------
-        # Retrieve Knowledge
-        # ----------------------------
+        # ---------------------------------------------------------
+        # Knowledge Retrieval
+        # ---------------------------------------------------------
 
-        context = retrieve_context(
-            db=db,
-            query=user_text,
-        )
+        try:
 
-        # ----------------------------
+            knowledge = retrieve_context(
+                db=db,
+                query=user_text,
+            )
+
+        except Exception:
+
+            knowledge = ""
+
+        # ---------------------------------------------------------
         # Build Prompt
-        # ----------------------------
+        # ---------------------------------------------------------
 
         prompt = build_prompt(
+
             user_message=user_text,
-            conversation_history=history,
-            knowledge_context=context,
+
             detected_language=language.language,
+
+            knowledge_context=knowledge,
+
+            conversation_history=history,
+
+            long_term_summary=summary,
+
         )
 
-        # ----------------------------
+        # ---------------------------------------------------------
         # Call Groq
-        # ----------------------------
+        # ---------------------------------------------------------
 
-        ai = generate_call_turn(
-            prompt=prompt
-        )
+        try:
 
-        # ----------------------------
-        # Validate AI Response
-        # ----------------------------
+            ai = generate_call_turn(
+
+                user_text=prompt,
+
+                knowledge_context="",
+
+                conversation_history=[],
+
+                long_term_summary="",
+
+            )
+
+        except Exception as e:
+
+            ai = {
+
+                "language": language.language,
+
+                "intent": "general",
+
+                "intent_confidence": 0.0,
+
+                "sentiment": "neutral",
+
+                "emotion": "neutral",
+
+                "response": f"AI Error: {str(e)}",
+
+                "entities": {},
+
+                "should_escalate": False,
+
+                "next_action": "none"
+
+            }
+
+        # ---------------------------------------------------------
+        # Validate JSON
+        # ---------------------------------------------------------
 
         ai = validate_response(ai)
 
-        # ----------------------------
-        # Save AI Response
-        # ----------------------------
+        # ---------------------------------------------------------
+        # Save Assistant Response
+        # ---------------------------------------------------------
 
         memory.add_turn(
+
             speaker="assistant",
+
             message=ai["response"],
+
         )
 
-        # ----------------------------
-        # Add Local Metadata
-        # ----------------------------
+        memory.maybe_refresh_summary()
+
+        # ---------------------------------------------------------
+        # Add Metadata
+        # ---------------------------------------------------------
+
+        ai["session_id"] = session_id
 
         ai["detected_language"] = language.language
 
-        ai["session_id"] = session_id
+        ai["history_size"] = len(memory.history())
+
+        ai["summary_available"] = bool(
+            memory.long_term_summary
+        )
 
         return ai
 

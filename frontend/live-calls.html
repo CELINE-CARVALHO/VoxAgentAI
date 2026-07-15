@@ -56,7 +56,7 @@
 
   .live-call-layout {
     display: grid;
-    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(230px, 320px) minmax(0, 1fr);
     gap: var(--space-5);
     align-items: start;
   }
@@ -88,6 +88,26 @@
     gap: var(--space-3);
   }
 
+  .voice-metadata {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-5) 0;
+  }
+
+  .voice-metric {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+  }
+
+  .voice-metric strong {
+    color: var(--text-primary);
+    text-align: right;
+  }
+
   .call-transcript {
     min-height: 420px;
     max-height: 58vh;
@@ -96,6 +116,16 @@
     flex-direction: column;
     gap: var(--space-4);
     padding-right: var(--space-2);
+  }
+
+  .turn {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+
+  .turn-user {
+    flex-direction: row-reverse;
   }
 
   .turn-avatar {
@@ -110,7 +140,8 @@
     background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
   }
 
-  .turn-user .turn-avatar {
+  .turn-user .turn-avatar,
+  .turn-system .turn-avatar {
     background: var(--input-bg);
     color: var(--text-primary);
     border: 1px solid var(--border-glass);
@@ -128,15 +159,26 @@
     background: rgba(79, 140, 255, 0.12);
   }
 
+  .turn-system .turn-bubble {
+    background: rgba(245, 158, 11, 0.1);
+  }
+
   .turn-text {
     color: var(--text-primary);
     margin: 0;
     line-height: 1.5;
   }
 
+  .turn-meta {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+  }
+
   .message-composer {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: var(--space-3);
     margin-top: var(--space-4);
   }
@@ -147,6 +189,10 @@
 
   @media (max-width: 900px) {
     .live-call-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .message-composer {
       grid-template-columns: 1fr;
     }
   }
@@ -180,7 +226,7 @@
         <button class="btn-icon sidebar-hamburger" id="sidebarHamburger" aria-label="Toggle sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
         <div>
           <div class="topbar-title">Live Calls</div>
-          <div class="topbar-subtitle">Talk to the AI voice agent through the real call pipeline.</div>
+          <div class="topbar-subtitle">Talk to the AI voice agent through the real voice pipeline.</div>
         </div>
       </div>
       <div class="topbar-actions">
@@ -193,7 +239,7 @@
       <div class="page-header">
         <div>
           <h1>Live Call Console</h1>
-          <p>Start a session, type a customer message, and review the agent response in real time.</p>
+          <p>Start a session, speak through the microphone, and hear the AI answer with browser TTS.</p>
         </div>
       </div>
 
@@ -209,6 +255,13 @@
           </div>
 
           <div class="call-timer" id="callTimer">00:00</div>
+
+          <div class="voice-metadata" aria-label="Voice metadata">
+            <div class="voice-metric"><span>Language</span><strong id="voiceLanguage">-</strong></div>
+            <div class="voice-metric"><span>Intent</span><strong id="voiceIntent">-</strong></div>
+            <div class="voice-metric"><span>Sentiment</span><strong id="voiceSentiment">-</strong></div>
+            <div class="voice-metric"><span>Latency</span><strong id="voiceLatency">-</strong></div>
+          </div>
 
           <div class="call-actions">
             <button class="btn btn-primary" id="startCallBtn">
@@ -226,7 +279,7 @@
         <section class="call-transcript-card glass-panel" aria-labelledby="transcriptTitle">
           <div class="chart-card-header">
             <h3 id="transcriptTitle"><i class="fa-solid fa-comments"></i> Transcript</h3>
-            <span class="chart-badge">Gemini powered</span>
+            <span class="chart-badge">Groq powered</span>
           </div>
 
           <div class="call-transcript" id="callTranscript" aria-live="polite">
@@ -238,25 +291,13 @@
 
           <div class="message-composer">
             <input type="text" class="form-input hidden" id="messageInput" placeholder="Type a customer message..." disabled>
+            <button class="btn btn-primary hidden" id="micButton" disabled>
+              <i class="fa-solid fa-microphone"></i> Speak
+            </button>
             <button class="btn btn-primary hidden" id="sendMessageBtn" disabled>
               <i class="fa-solid fa-paper-plane"></i> Send
             </button>
           </div>
-          <div id="voiceStatus" class="voice-status">
-              Connecting...
-          </div>
-          <div id="voiceConversation" class="voice-conversation">
-
-          </div>
-          <button
-              id="micButton"
-              class="btn btn-primary">
-
-              <i class="fa-solid fa-microphone"></i>
-
-              Speak
-
-          </button>
         </section>
       </div>
     </div>
@@ -268,11 +309,9 @@
 <script src="js/utils.js"></script>
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>
-<script src="js/calls.js"></script>
 <script src="js/audio.js"></script>
-<script src="js/recorder.js"></script>
 <script src="js/websocket.js"></script>
+<script src="js/tts.js"></script>
 <script src="js/voice-ui.js"></script>
 </body>
 </html>
-

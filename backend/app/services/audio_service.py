@@ -46,7 +46,10 @@ class AudioService:
         file: UploadFile
     ):
 
-        if file.content_type not in self.ALLOWED_TYPES:
+        # Strip codec parameters (e.g. "audio/webm;codecs=opus" → "audio/webm")
+        base_type = (file.content_type or "").split(";")[0].strip()
+
+        if base_type not in self.ALLOWED_TYPES:
 
             raise ValueError(
                 f"Unsupported file type: {file.content_type}"

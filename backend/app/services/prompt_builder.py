@@ -1,16 +1,18 @@
 """
-Prompt Builder Service
+prompt_builder.py
 
-Builds the complete prompt sent to the LLM.
+Builds the final prompt sent to Groq.
 
-Responsibilities:
-- System instructions
-- Company policy
-- Knowledge Base context
-- Conversation history
-- Current user message
+Responsibilities
 
-This service contains NO model-specific code.
+- System Instructions
+- Company Policy
+- Knowledge Base
+- Long-term Memory
+- Recent Conversation
+- Current User Message
+
+No API calls happen here.
 """
 
 from typing import List, Dict
@@ -21,80 +23,162 @@ MAX_HISTORY = 10
 SYSTEM_PROMPT = """
 You are VoxAgent AI.
 
-You are an enterprise AI Voice Agent used by businesses to handle customer calls.
+You are a multilingual enterprise AI Voice Agent for customer support.
 
-Your goals:
+Your responsibilities:
 
-- Be professional.
-- Be polite.
-- Be concise.
-- Answer only using available knowledge.
-- Never hallucinate.
-- If the answer isn't available,
-  politely explain that you don't know
-  and offer to connect the customer to a human.
+• Detect the caller's language.
+• Detect the caller's intent.
+• Detect caller sentiment.
+• Detect caller emotion.
+• Extract entities.
+• Maintain conversation context.
+• Answer naturally.
+• Never hallucinate.
+• Never invent company policies.
+• Always use the supplied knowledge base.
+• If information is unavailable,
+  politely say so and suggest a human agent.
 
-Always reply in the SAME language as the user.
+Always answer in the SAME language as the customer.
 
-Always return ONLY valid JSON.
+=== CRITICAL: VOICE OUTPUT / TTS ===
+This assistant speaks its response aloud using browser Text-To-Speech.
+The TTS engine on Windows does NOT have Tamil or Hindi Unicode voice packs.
 
-Output format:
+Therefore:
+• If the customer writes in Tamil (even romanized / Tanglish like "paarkal",
+  "ithu aen"), respond in Tamil but write it in ROMANIZED LATIN SCRIPT
+  (Tanglish). Example: "Network signal konjam weak aa iruntha ithu aagalaam."
+  NOT in Unicode Tamil: “நெட்வர்க் சிக்னல்...”
+
+• If the customer writes in Hindi (even romanized / Hinglish like "kya hoga",
+  "batao"), respond in Hindi but write it in ROMANIZED LATIN SCRIPT
+  (Hinglish). Example: "Network signal 2 bars hai kyunki coverage area mein
+  problem ho sakti hai."
+  NOT in Devanagari Unicode: “नेटवर्क...”
+
+• For English, respond normally in English.
+
+This ensures every caller hears a clear, natural spoken response
+regardless of their device's installed voice packs.
+
+Return ONLY valid JSON.
+
+JSON FORMAT
 
 {
-    "language": "...",
-    "intent": "...",
-    "sentiment": "...",
-    "response": "..."
+    "language":"en",
+
+    "intent":"general",
+
+    "intent_confidence":0.95,
+
+    "sentiment":"neutral",
+
+    "emotion":"neutral",
+
+    "entities":{
+
+        "customer_name":"",
+
+        "phone":"",
+
+        "email":"",
+
+        "order_id":""
+
+    },
+
+    "should_escalate":false,
+
+    "next_action":"none",
+
+    "response":"..."
 }
 """
 
 
 COMPANY_POLICY = """
-Rules
+Company Rules
 
-1. Never invent company policies.
+1. Never invent policies.
 
-2. Never fabricate order information.
+2. Never invent prices.
 
-3. Never fabricate customer data.
+3. Never invent order information.
 
-4. Use the Knowledge Base whenever possible.
+4. Never invent customer information.
 
-5. If information is unavailable,
-   suggest escalation.
+5. Use only supplied knowledge.
 
 6. Keep answers conversational.
 
-7. Keep answers under 120 words.
+7. Maximum response:
+
+120 words.
+
+8. If the answer isn't known,
+suggest contacting a human.
+
+9. Never output markdown.
+
+10. Never explain JSON.
 """
 
 
 def build_prompt(
+    *,
     user_message: str,
-    knowledge_context: str = "",
-    conversation_history: List[Dict] | None = None,
+    detected_language: str,
+    knowledge_context: str,
+    conversation_history: List[Dict],
+    long_term_summary: str = "",
 ) -> str:
-    """
-    Returns a single optimized prompt for Groq.
-    """
 
     prompt = []
 
-    # ------------------------------------------------------------------
-    # System Prompt
-    # ------------------------------------------------------------------
+    # ------------------------------------------------
+    # SYSTEM
+    # ------------------------------------------------
 
     prompt.append(SYSTEM_PROMPT)
 
-    # ------------------------------------------------------------------
-    # Company Rules
-    # ------------------------------------------------------------------
+    # ------------------------------------------------
+    # POLICY
+    # ------------------------------------------------
 
     prompt.append(COMPANY_POLICY)
 
-    # ------------------------------------------------------------------
-    # Knowledge Base
-    # ------------------------------------------------------------------
+    # ------------------------------------------------
+    # LANGUAGE
+    # ------------------------------------------------
+
+    prompt.append(
+        f"""
+Detected Language
+
+{detected_language}
+"""
+    )
+
+    # ------------------------------------------------
+    # LONG TERM MEMORY
+    # ------------------------------------------------
+
+    if long_term_summary:
+
+        prompt.append(
+            f"""
+Conversation Summary
+
+{long_term_summary}
+"""
+        )
+
+    # ------------------------------------------------
+    # KNOWLEDGE BASE
+    # ------------------------------------------------
 
     if knowledge_context:
 
@@ -112,17 +196,17 @@ Knowledge Base
             """
 Knowledge Base
 
-No relevant knowledge was found.
+No relevant knowledge available.
 """
         )
 
-    # ------------------------------------------------------------------
-    # Conversation
-    # ------------------------------------------------------------------
+    # ------------------------------------------------
+    # RECENT CONVERSATION
+    # ------------------------------------------------
 
     if conversation_history:
 
-        prompt.append("Conversation History")
+        prompt.append("Recent Conversation")
 
         for turn in conversation_history[-MAX_HISTORY:]:
 
@@ -130,29 +214,40 @@ No relevant knowledge was found.
 
             text = turn.get("text", "")
 
-            prompt.append(f"{speaker}: {text}")
+            prompt.append(
 
-    # ------------------------------------------------------------------
-    # Current Message
-    # ------------------------------------------------------------------
+                f"{speaker}: {text}"
+
+            )
+
+    # ------------------------------------------------
+    # CURRENT USER MESSAGE
+    # ------------------------------------------------
 
     prompt.append(
+
         f"""
 
 Current User Message
 
 {user_message}
+
 """
     )
 
+    # ------------------------------------------------
+    # FINAL INSTRUCTION
+    # ------------------------------------------------
+
     prompt.append(
         """
+Return ONLY JSON.
 
-Return ONLY valid JSON.
+Do not explain.
 
-No markdown.
+Do not use markdown.
 
-No explanation.
+Do not include code fences.
 """
     )
 

@@ -13,6 +13,8 @@ from app.database import init_db, SessionLocal
 from app.routers import auth, dashboard, calls, knowledge, analytics, settings as settings_router, profile
 from app.routers import voice
 from app.routers import ws
+from app.routers import audio_ws
+# from app.routers import voice
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -42,6 +44,8 @@ app.include_router(settings_router.router)
 app.include_router(profile.router)
 app.include_router(voice.router)
 app.include_router(ws.router)
+app.include_router(audio_ws.router)
+# app.include_router(voice.router)
 
 
 @app.on_event("startup")

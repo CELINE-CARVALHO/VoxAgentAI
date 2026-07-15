@@ -12,3 +12,4 @@ class VoiceResponse(BaseModel):
     duration_seconds: Optional[float] = None
 
     transcription: Optional[str] = None
+    language: Optional[str] = None
