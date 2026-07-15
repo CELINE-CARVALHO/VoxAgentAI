@@ -63,6 +63,22 @@ class StreamingService:
             message=user_text,
         )
 
+        from app.models.call import Call
+        from app.crud.call import add_transcript_turn
+
+        call = db.query(Call).filter(Call.id == session_id).first()
+        if call:
+            try:
+                add_transcript_turn(
+                    db=db,
+                    call=call,
+                    speaker="user",
+                    text=user_text,
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("Failed to log user transcript to DB: %s", e)
+
         history = memory.history()
 
         summary = memory.long_term_summary
@@ -165,6 +181,21 @@ class StreamingService:
             message=ai["response"],
 
         )
+
+        if call:
+            try:
+                add_transcript_turn(
+                    db=db,
+                    call=call,
+                    speaker="ai",
+                    text=ai["response"],
+                    language=ai.get("detected_language", "en"),
+                    sentiment=ai.get("sentiment", "neutral"),
+                    intent=ai.get("intent", "general"),
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("Failed to log assistant transcript to DB: %s", e)
 
         memory.maybe_refresh_summary()
 

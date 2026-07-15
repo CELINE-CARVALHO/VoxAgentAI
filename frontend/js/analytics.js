@@ -42,9 +42,8 @@
 
         await loadPerformance();
 
-        // Will be enabled after backend endpoint exists
-        // await loadTopIntents();
-
+        // Enabled after backend endpoint exists
+        await loadTopIntents();
     }
 
     function initRangeSelector() {

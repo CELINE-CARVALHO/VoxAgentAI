@@ -47,7 +47,9 @@ WebSocket Client
 
             const protocol = location.protocol === "https:" ? "wss" : "ws";
             const host = location.hostname || "127.0.0.1";
-            const url = `${protocol}://${host}:8000/ws/${encodeURIComponent(sessionId)}`;
+            const token = localStorage.getItem("voxagent-token") || "";
+            const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+            const url = `${protocol}://${host}:8000/ws/${encodeURIComponent(sessionId)}${tokenParam}`;
 
             this.socket = new WebSocket(url);
 

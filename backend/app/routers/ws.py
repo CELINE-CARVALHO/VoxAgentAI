@@ -10,6 +10,7 @@ import logging
 from fastapi import APIRouter
 from fastapi import WebSocket
 from fastapi import WebSocketDisconnect
+from fastapi import Query
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
@@ -45,11 +46,34 @@ def _parse_text_message(raw_text: str) -> tuple[str, str | None]:
 async def websocket_endpoint(
     websocket: WebSocket,
     session_id: str,
+    token: str = Query(None),
 ):
     await websocket_manager.connect(session_id, websocket)
     logger.info("WebSocket connected: %s", session_id)
 
     db: Session = SessionLocal()
+
+    # 1. Decode token to find owner_id (if authenticated)
+    owner_id = None
+    if token:
+        try:
+            from app.services.security import decode_access_token
+            owner_id = decode_access_token(token)
+        except Exception:
+            pass
+
+    # 2. Ensure call exists in the database
+    try:
+        from app.models.call import Call
+        from app.crud.call import create_call
+        from app.schemas.call import CallStartRequest
+
+        call = db.query(Call).filter(Call.id == session_id).first()
+        if not call:
+            payload = CallStartRequest(caller_name="Voice User")
+            create_call(db, payload=payload, owner_id=owner_id, call_id=session_id)
+    except Exception as e:
+        logger.warning("Failed to initialize call record in DB: %s", e)
 
     try:
         while True:
@@ -100,6 +124,26 @@ async def websocket_endpoint(
         except Exception:
             pass
     finally:
+        # 3. Clean up and finalize the Call in DB
+        try:
+            from app.crud.call import end_call, save_call_summary
+            from app.models.call import Call
+            from app.services.groq_service import generate_call_summary
+
+            call = db.query(Call).filter(Call.id == session_id).first()
+            if call and call.status == "active":
+                call = end_call(db, call)
+                try:
+                    history = [{"speaker": t.speaker, "text": t.text} for t in call.transcripts]
+                    if history:
+                        summary_result = generate_call_summary(history)
+                        if summary_result:
+                            save_call_summary(db, call, summary_result["summary"])
+                except Exception as summary_exc:
+                    logger.warning("Summary generation failed on WS disconnect for call %s: %s", session_id, summary_exc)
+        except Exception as e:
+            logger.warning("Failed to end call in DB on websocket disconnect: %s", e)
+
         db.close()
         memory_manager.clear(session_id)
         await websocket_manager.disconnect(session_id)

@@ -13,14 +13,17 @@ def generate_call_ref() -> str:
     return "CALL-" + "".join(random.choices(string.digits, k=6))
 
 
-def create_call(db: Session, payload: CallStartRequest, owner_id=None) -> Call:
-    call = Call(
-        call_ref=generate_call_ref(),
-        caller_name=payload.caller_name or "Unknown Caller",
-        phone_number=payload.phone_number,
-        status="active",
-        owner_id=owner_id,
-    )
+def create_call(db: Session, payload: CallStartRequest, owner_id=None, call_id=None) -> Call:
+    kwargs = {
+        "call_ref": generate_call_ref(),
+        "caller_name": payload.caller_name or "Unknown Caller",
+        "phone_number": payload.phone_number,
+        "status": "active",
+        "owner_id": owner_id,
+    }
+    if call_id:
+        kwargs["id"] = call_id
+    call = Call(**kwargs)
     db.add(call)
     db.commit()
     db.refresh(call)
