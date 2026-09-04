@@ -37,10 +37,20 @@ def start_call(
 ):
     call = create_call(db, payload, owner_id=current_user.id)
 
+    from app.models.setting import Setting
+    lang_hint = "en"
+    user_setting = db.query(Setting).filter(Setting.user_id == current_user.id).first()
+    if user_setting and isinstance(user_setting.preferences, dict):
+        lang_hint = user_setting.preferences.get("default_language", "en")
+
     try:
-        greeting = generate_greeting()
+        greeting = generate_greeting(language_hint=lang_hint)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"LLM greeting failed: {exc}")
+
+    # Enforce correct language code in the greeting dictionary
+    if greeting.get("language") not in ["hi", "ta", "en"]:
+        greeting["language"] = lang_hint
 
     add_transcript_turn(
         db, call, speaker="ai", text=greeting["response"],

@@ -1,4 +1,5 @@
 """Knowledge Base page: upload docs, list/search/filter, delete, view content."""
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from app.schemas.knowledge import KnowledgeDocOut, KnowledgeListOut
 from app.crud.knowledge import create_document
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
+logger = logging.getLogger(__name__)
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "md", "csv"}
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
@@ -72,6 +74,47 @@ def delete_document(doc_id: UUID, db: Session = Depends(get_db), current_user=De
     doc = db.query(KnowledgeDocument).filter(KnowledgeDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    # Clean up Pinecone vectors (best-effort)
+    try:
+        from app.services.rag_service import delete_document_vectors
+        delete_document_vectors(str(doc_id))
+    except Exception as exc:
+        logger.warning("Failed to delete Pinecone vectors for doc %s: %s", doc_id, exc)
+
     db.delete(doc)
     db.commit()
-    
+
+
+@router.post("/reindex", status_code=200)
+def reindex_all_documents(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Re-index all ready documents into Pinecone.
+
+    Useful for bootstrapping when switching from TF-IDF to Pinecone,
+    or after recreating the Pinecone index.
+    """
+    from app.services.rag_service import index_document
+
+    docs = (
+        db.query(KnowledgeDocument)
+        .filter(KnowledgeDocument.status == "ready")
+        .all()
+    )
+
+    results = {"total_docs": len(docs), "indexed": 0, "chunks": 0, "errors": []}
+
+    for doc in docs:
+        if not doc.content_text:
+            continue
+        try:
+            count = index_document(doc.id, doc.filename, doc.content_text)
+            results["indexed"] += 1
+            results["chunks"] += count
+        except Exception as exc:
+            results["errors"].append({"doc_id": doc.id, "filename": doc.filename, "error": str(exc)})
+            logger.error("Reindex failed for doc %s: %s", doc.id, exc)
+
+    return results

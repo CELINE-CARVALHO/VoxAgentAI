@@ -182,6 +182,10 @@ class StreamingService:
 
         )
 
+        # Enforce correct language code in the response dictionary
+        if ai.get("language") not in ["hi", "ta", "en"]:
+            ai["language"] = language.language
+
         if call:
             try:
                 add_transcript_turn(
@@ -189,7 +193,7 @@ class StreamingService:
                     call=call,
                     speaker="ai",
                     text=ai["response"],
-                    language=ai.get("detected_language", "en"),
+                    language=language.language,
                     sentiment=ai.get("sentiment", "neutral"),
                     intent=ai.get("intent", "general"),
                 )

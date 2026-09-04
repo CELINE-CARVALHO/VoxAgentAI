@@ -85,6 +85,13 @@ Never say: "Certainly.", "I understand your concern.", "Thank you for your query
 - Never hallucinate details not present in the context.
 - If the answer is genuinely unavailable: say naturally that you couldn't find it,
   and suggest the customer speak with a human representative.
+- CRITICAL: If no Knowledge Base context is provided, or the context does NOT contain
+  information relevant to the customer's question, you MUST clearly say you don't have
+  that information. DO NOT guess, infer, or fabricate an answer under any circumstances.
+- When uncertain, use phrases like: "I don't have that specific information right now"
+  or "Let me connect you with someone who can look that up for you."
+- Even if the customer insists or rephrases, never invent facts, prices, policies,
+  dates, or details that are not explicitly present in the provided context.
 
 === RESPONSE STYLE FOR VOICE ===
 - Short, clear sentences. Pause points are natural — no long run-on paragraphs.
@@ -116,6 +123,9 @@ Windows TTS does NOT have Tamil or Hindi Unicode voice packs installed.
   NEVER use Devanagari characters (न, ट, व) in the response field.
 
 • English callers → respond normally in English.
+
+CRITICAL SCRIPT RULE:
+Under no circumstances are you allowed to output Hindi/Devanagari Unicode characters (e.g. न, म, स, त) or Tamil Unicode characters (e.g. வ, ண, க்) in the "response" field of the JSON. You MUST use Romanized Latin script (Hinglish/Tanglish) for Hindi and Tamil. If you output Devanagari or Tamil Unicode characters, the audio synthesis will completely break and fail silently. Ensure that the "language" field in the output matches the detected language ("hi", "ta", or "en") instead of defaulting to "en".
 
 === INTENT & SENTIMENT ===
 - Detect the customer's intent from their message.
@@ -228,7 +238,7 @@ Caller:
         model=settings.GROQ_MODEL,
         temperature=0.8,
         top_p=0.95,
-        max_tokens=180,   # ~60 words — keeps voice responses short and fast
+        max_tokens=250,   # keeps voice responses short and fast
         response_format={"type": "json_object"},
         messages=[
             {
@@ -271,10 +281,11 @@ Guidelines:
 - Sound friendly and ready to help — not scripted.
 - Keep it short: one or two sentences maximum.
 - Do NOT say "Certainly", "How may I assist you today?", or any stiff formal phrase.
+- IMPORTANT SCRIPT RULE: If the language is Hindi or Tamil, you MUST write the response in ROMANIZED Latin script (Hinglish/Tanglish). Do NOT use Devanagari (Hindi) or Tamil Unicode characters in the response field.
 - Examples of the right tone:
     English : "Hi there! I'm Alex from VoxAgent AI. What can I help you with?"
-    Hindi   : "नमस्ते! मैं VoxAgent AI सपोर्ट से Alex बोल रहा हूँ। मैं आपकी कैसे मदद कर सकता हूँ?"
-    Tamil   : "வணக்கம்! நான் VoxAgent AI-இலிருந்து Alex பேசுகிறேன். நான் உங்களுக்கு எப்படி உதவலாம்?"
+    Hindi   : "Namaste! Main VoxAgent AI support se Alex bol raha hoon. Main aapki kaise madad kar sakta hoon?"
+    Tamil   : "Vanakkam! Naan VoxAgent AI-iliruntu Alex paesugiraen. Naan ungaluku eppadi uthavalaam?"
 
 Return valid JSON only. No markdown fences.
 
@@ -297,7 +308,7 @@ Return valid JSON only. No markdown fences.
         model=settings.GROQ_MODEL,
         temperature=0.75,   # slight warmth variety across calls
         top_p=0.95,
-        max_tokens=80,    # greetings must be short — 1 or 2 sentences max
+        max_tokens=150,    # greetings must be short — 1 or 2 sentences max
         response_format={"type": "json_object"},
         messages=[
             {

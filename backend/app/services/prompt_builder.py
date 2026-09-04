@@ -50,15 +50,18 @@ Therefore:
 • If the customer writes in Tamil (even romanized / Tanglish like "paarkal",
   "ithu aen"), respond in Tamil but write it in ROMANIZED LATIN SCRIPT
   (Tanglish). Example: "Network signal konjam weak aa iruntha ithu aagalaam."
-  NOT in Unicode Tamil: “நெட்வர்க் சிக்னல்...”
+  NEVER use Unicode Tamil characters (வ, ண, க்) in the response field.
 
 • If the customer writes in Hindi (even romanized / Hinglish like "kya hoga",
   "batao"), respond in Hindi but write it in ROMANIZED LATIN SCRIPT
   (Hinglish). Example: "Network signal 2 bars hai kyunki coverage area mein
   problem ho sakti hai."
-  NOT in Devanagari Unicode: “नेटवर्क...”
+  NEVER use Devanagari characters (न, ट, व) in the response field.
 
 • For English, respond normally in English.
+
+CRITICAL SCRIPT RULE:
+Under no circumstances are you allowed to output Hindi/Devanagari Unicode characters (e.g. न, म, स, त) or Tamil Unicode characters (e.g. வ, ண, க்) in the "response" field of the JSON. You MUST use Romanized Latin script (Hinglish/Tanglish) for Hindi and Tamil. If you output Devanagari or Tamil Unicode characters, the audio synthesis will completely break and fail silently. Ensure that the "language" field in the output matches the detected language ("hi", "ta", or "en") instead of default "en".
 
 This ensures every caller hears a clear, natural spoken response
 regardless of their device's installed voice packs.

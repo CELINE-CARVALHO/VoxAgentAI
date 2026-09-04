@@ -37,6 +37,20 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 200
 
     # ==========================================================
+    # Pinecone (free tier — 1 serverless index, 100 K vectors)
+    # ==========================================================
+    PINECONE_API_KEY: str = ""
+    PINECONE_INDEX_NAME: str = "voxagent-knowledge"
+    PINECONE_CLOUD: str = "aws"
+    PINECONE_REGION: str = "us-east-1"
+
+    # ==========================================================
+    # Embedding Model (local, no API key needed)
+    # ==========================================================
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
+
+    # ==========================================================
     # Logging
     # ==========================================================
     LOG_LEVEL: str = "INFO"
